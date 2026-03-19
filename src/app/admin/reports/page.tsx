@@ -212,6 +212,11 @@ export default function ReportsPage() {
                           <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>
                             {cfg.label}
                           </span>
+                          {item.status === 'failed' && item.error_message && (
+                            <div style={{ fontSize: 10, color: '#EF4444', marginTop: 4, maxWidth: 200, wordBreak: 'break-all', lineHeight: 1.4 }}>
+                              {item.error_message}
+                            </div>
+                          )}
                         </td>
                         <td style={{ ...td, textAlign: 'center' }}>
                           {item.status === 'processing' ? (
