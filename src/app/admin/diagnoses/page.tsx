@@ -20,17 +20,39 @@ interface Diagnosis {
   date: string;
 }
 
+interface Toast {
+  id: number;
+  type: 'info' | 'success' | 'error';
+  message: string;
+}
+
 const ENERGY_COLORS: Record<string, { bg: string; color: string }> = {
   green:  { bg: '#DCFCE7', color: '#166534' },
   yellow: { bg: '#FEF9C3', color: '#854D0E' },
   red:    { bg: '#FEE2E2', color: '#991B1B' },
 };
 
+const TOAST_COLORS = {
+  info:    { bg: '#1E293B', color: 'white', icon: '⏳' },
+  success: { bg: '#166534', color: 'white', icon: '✅' },
+  error:   { bg: '#991B1B', color: 'white', icon: '❌' },
+};
+
+let toastId = 0;
+
 export default function DiagnosesPage() {
   const [filter, setFilter] = useState<'all' | 'completed' | 'in_progress'>('all');
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<Record<string, 'loading' | 'done' | 'error'>>({});
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const addToast = (type: Toast['type'], message: string) => {
+    const id = ++toastId;
+    setToasts(t => [...t, { id, type, message }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4000);
+    return id;
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,28 +64,29 @@ export default function DiagnosesPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleGeneratePdf = async (fullId: string) => {
+  const handleGeneratePdf = async (fullId: string, name: string) => {
     setGenerating(g => ({ ...g, [fullId]: 'loading' }));
+    // 클릭 즉시 토스트 표시
+    addToast('info', `${name}님 PDF 생성 요청 중…`);
+
     try {
-      // 1. 진단 데이터(answers) 가져오기
       const detailRes = await fetch(`/api/admin/diagnoses/${fullId}`);
       if (!detailRes.ok) throw new Error('진단 데이터 조회 실패');
       const { diagnosisData, userId } = await detailRes.json();
 
-      // 2. PDF 생성 큐에 등록
       const genRes = await fetch('/api/report/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ diagnosisData, userId }),
       });
       if (!genRes.ok) throw new Error('PDF 생성 요청 실패');
-      const { queueId, position, estimatedSec } = await genRes.json();
+      const { position, estimatedSec } = await genRes.json();
 
       setGenerating(g => ({ ...g, [fullId]: 'done' }));
-      alert(`✅ PDF 생성 큐에 등록됐습니다.\n순서: ${position}번째 | 예상 ${estimatedSec}초\nQueue ID: ${queueId.substring(0, 8)}…\n\n리포트 관리 페이지에서 진행 상태를 확인하세요.`);
+      addToast('success', `큐 등록 완료 — ${position}번째 | 예상 ${estimatedSec}초`);
     } catch (e: any) {
       setGenerating(g => ({ ...g, [fullId]: 'error' }));
-      alert('오류: ' + e.message);
+      addToast('error', e.message || 'PDF 생성 요청 실패');
     }
   };
 
@@ -74,7 +97,28 @@ export default function DiagnosesPage() {
   };
 
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
+      {/* 토스트 알림 */}
+      <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {toasts.map(t => {
+          const cfg = TOAST_COLORS[t.type];
+          return (
+            <div key={t.id} style={{
+              background: cfg.bg, color: cfg.color,
+              padding: '12px 18px', borderRadius: 10,
+              fontSize: 13, fontWeight: 600,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              display: 'flex', alignItems: 'center', gap: 8,
+              animation: 'fadeIn .15s ease',
+              minWidth: 260,
+            }}>
+              <span>{cfg.icon}</span>
+              <span>{t.message}</span>
+            </div>
+          );
+        })}
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 4 }}>진단 관리</h1>
@@ -160,10 +204,11 @@ export default function DiagnosesPage() {
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       {d.status === 'completed' ? (
                         <button
-                          onClick={() => handleGeneratePdf(d.fullId)}
+                          onClick={() => handleGeneratePdf(d.fullId, d.name)}
                           disabled={!!pdfState}
                           style={{
-                            padding: '5px 12px', borderRadius: 6, border: 'none', cursor: pdfState ? 'not-allowed' : 'pointer',
+                            padding: '5px 12px', borderRadius: 6, border: 'none',
+                            cursor: pdfState ? 'not-allowed' : 'pointer',
                             fontSize: 11, fontWeight: 700,
                             background: pdfState === 'done' ? '#DCFCE7' : pdfState === 'error' ? '#FEE2E2' : pdfState === 'loading' ? '#F1F5F9' : '#8B5CF6',
                             color: pdfState === 'done' ? '#166534' : pdfState === 'error' ? '#991B1B' : pdfState === 'loading' ? '#94A3B8' : 'white',
