@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { FOCUS_TYPES, ANCHOR_DEFS, COMP_NAMES } from '@/data/mappings';
 import {

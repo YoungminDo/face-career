@@ -1,4 +1,5 @@
 import { FOCUS_TYPES, COMP_NAMES, JOB_COMPETENCY_MAPPING } from '@/data/mappings';
+import type { FocusCode } from '@/data/types';
 import {
   calcFitScores, determineFitType, applyRefine,
   calcAnchorScores, getTopAnchors,
@@ -62,7 +63,7 @@ export function processRecord(raw: DiagnosisRecord): ProcessedDiagnosis {
     const focusScores = calcFitScores(raw.focus || []);
     let focus = determineFitType(focusScores);
     if (focus.needsRefine && raw.focusRefine?.length) {
-      const refined = applyRefine(focusScores, raw.focusRefine);
+      const refined = applyRefine(focusScores, raw.focusRefine as import('@/data/types').FocusCode[]);
       focus = { ...focus, ...refined, subTypeCode: refined.primary + refined.secondary };
     }
 
@@ -70,7 +71,7 @@ export function processRecord(raw: DiagnosisRecord): ProcessedDiagnosis {
     anchorLikertQuestions.forEach((q: any, i: number) => {
       likertObj[q.anchor] = raw.anchorLikert?.[i] || 4;
     });
-    const anchorScores = calcAnchorScores(likertObj as any, raw.anchorTradeoff || []);
+    const anchorScores = calcAnchorScores(likertObj as any, (raw.anchorTradeoff || []) as import('@/data/types').AnchorKey[]);
     const top2 = getTopAnchors(anchorScores, 2);
 
     const { scaled } = calcCapacityScores(raw.capacity || []);
