@@ -2104,9 +2104,12 @@ function ReportContent() {
   // print 모드: HTML을 window 변수에 저장 → Puppeteer가 page.setContent()로 직접 로드
   // document.write()는 Puppeteer execution context를 파괴하므로 사용 금지
   useEffect(() => {
-    if (isPrint && status === 'ready' && html) {
+    if (!isPrint) return;
+    if (status === 'ready' && html) {
       (window as any).__reportHtml = html;
       (window as any).__reportReady = true;
+    } else if (status === 'no_data') {
+      (window as any).__reportError = 'no_data: localStorage 없음 또는 데이터 형식 오류';
     }
   }, [isPrint, status, html]);
 

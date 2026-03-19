@@ -42,22 +42,39 @@ export async function POST(req: NextRequest) {
     const executablePath = process.env.CHROMIUM_PATH || await chromium.executablePath(CHROMIUM_URL);
     console.log('[worker] chromium path:', executablePath, '| exists:', fs.existsSync(executablePath));
 
-    // spawn ENOENT 방지: 다운로드 후 실행 권한 보장
+    // spawn ENOENT/ETXTBSY 방지: 실행 권한 보장 + 충돌 시 재시도
     if (!process.env.CHROMIUM_PATH && fs.existsSync(executablePath)) {
-      fs.chmodSync(executablePath, 0o755);
+      try { fs.chmodSync(executablePath, 0o755); } catch {}
     }
 
-    const browser = await puppeteer.launch({
-      executablePath,
-      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      headless: chromium.headless ?? true,
-      defaultViewport: { width: 1240, height: 1754 },
-    });
+    let browser: any;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        browser = await puppeteer.launch({
+          executablePath,
+          args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+          headless: chromium.headless ?? true,
+          defaultViewport: { width: 1240, height: 1754 },
+        });
+        break;
+      } catch (e: any) {
+        console.warn(`[worker] launch attempt ${attempt} failed:`, e.message);
+        if (attempt < 3 && (e.message?.includes('ETXTBSY') || e.message?.includes('ENOENT'))) {
+          await new Promise(r => setTimeout(r, 2000 * attempt));
+        } else {
+          throw e;
+        }
+      }
+    }
 
     await updateQueueStatus(queueId, { progress: 25 });
 
     const page = await browser.newPage();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://face.da-sh.io';
+
+    // 페이지 콘솔 로그 캡처 (디버그용)
+    page.on('console', (msg: any) => console.log('[page]', msg.type(), msg.text()));
+    page.on('pageerror', (err: any) => console.error('[page error]', err.message));
 
     // 1) 도메인 방문 → localStorage 설정 가능 상태
     await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -65,6 +82,7 @@ export async function POST(req: NextRequest) {
     // 2) 진단 데이터 localStorage에 주입
     await page.evaluate((data: any) => {
       localStorage.setItem('face_diagnosis', JSON.stringify(data));
+      console.log('[inject] face_diagnosis keys:', Object.keys(data || {}));
     }, queueItem.diagnosis_data);
 
     await updateQueueStatus(queueId, { progress: 40 });
@@ -74,8 +92,13 @@ export async function POST(req: NextRequest) {
 
     await updateQueueStatus(queueId, { progress: 60 });
 
-    // 4) 준비 신호 대기 (최대 40초) — document.write() 제거, window 변수로 통신
-    await page.waitForFunction('window.__reportReady === true', { timeout: 40000 });
+    // 4) 준비 신호 대기 (최대 40초) — __reportReady 또는 __reportError 감지
+    await page.waitForFunction(
+      'window.__reportReady === true || window.__reportError',
+      { timeout: 40000 }
+    );
+    const reportError = await page.evaluate(() => (window as any).__reportError);
+    if (reportError) throw new Error(`리포트 페이지 오류: ${reportError}`);
 
     await updateQueueStatus(queueId, { progress: 75 });
 
