@@ -36,8 +36,16 @@ export async function POST(req: NextRequest) {
     const chromium = require('@sparticuz/chromium-min');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const puppeteer = require('puppeteer-core');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs');
 
     const executablePath = process.env.CHROMIUM_PATH || await chromium.executablePath(CHROMIUM_URL);
+    console.log('[worker] chromium path:', executablePath, '| exists:', fs.existsSync(executablePath));
+
+    // spawn ENOENT 방지: 다운로드 후 실행 권한 보장
+    if (!process.env.CHROMIUM_PATH && fs.existsSync(executablePath)) {
+      fs.chmodSync(executablePath, 0o755);
+    }
 
     const browser = await puppeteer.launch({
       executablePath,
