@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FACE Career Report — {{USER_NAME}}</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+:root {
+  --co: #22C55E; --cr: #F97316; --su: #3B82F6; --ar: #8B5CF6;
+  --good: #22C55E; --warn: #EAB308; --bad: #EF4444;
+  --dark: #0F172A; --text: #1E293B; --sub: #64748B; --muted: #94A3B8;
+  --light: #E2E8F0; --bg: #F8FAFC;
+  --insight-c: #F59E0B; --drive-c: #EF4444; --connect-c: #22C55E; --create-c: #8B5CF6;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Pretendard',-apple-system,sans-serif; color:var(--text); background:#CBD5E1; font-size:12pt; line-height:1.8; -webkit-font-smoothing:antialiased; }
+
+@page { size:A4; margin:0; }
+.page { width:210mm; height:297mm; padding:20mm 20mm 16mm; page-break-after:always; position:relative; background:white; overflow:hidden; }
+@media screen { .page { margin:16px auto; box-shadow:0 8px 40px rgba(0,0,0,.18); } }
+@media print {
+  body { background:white !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .page { box-shadow:none; margin:0; height:297mm; overflow:hidden; }
+}
+
+/* 타이포 */
+.t-hero { font-size:40pt; font-weight:900; line-height:1.1; letter-spacing:-1.5px; }
+.t-h1 { font-size:26pt; font-weight:800; line-height:1.25; letter-spacing:-.5px; }
+.t-h2 { font-size:20pt; font-weight:700; line-height:1.3; }
+.t-h3 { font-size:15pt; font-weight:700; line-height:1.4; }
+.t-h4 { font-size:13pt; font-weight:600; }
+.t-body { font-size:12pt; line-height:1.8; color:#334155; }
+.t-small { font-size:10pt; color:var(--sub); line-height:1.6; }
+.t-label { font-size:9.5pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+.t-num { font-size:36pt; font-weight:900; letter-spacing:-1px; }
+
+/* 유틸 */
+.fc-co { color:var(--co); } .fc-cr { color:var(--cr); } .fc-su { color:var(--su); } .fc-ar { color:var(--ar); }
+.bg-dark { background:var(--dark); color:white; }
+.flex { display:flex; } .flex-col { flex-direction:column; } .items-center { align-items:center; } .justify-between { justify-content:space-between; } .justify-center { justify-content:center; }
+.gap-sm { gap:8px; } .gap-md { gap:14px; } .gap-lg { gap:20px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.text-center { text-align:center; }
+.w-full { width:100%; }
+.mt-xs { margin-top:4px; } .mt-sm { margin-top:8px; } .mt-md { margin-top:14px; } .mt-lg { margin-top:22px; } .mt-xl { margin-top:32px; }
+.mb-xs { margin-bottom:4px; } .mb-sm { margin-bottom:8px; } .mb-md { margin-bottom:14px; }
+.rounded { border-radius:12px; } .rounded-lg { border-radius:16px; } .rounded-full { border-radius:9999px; }
+.p-md { padding:12px 16px; } .p-lg { padding:18px 22px; }
+
+/* 카드 */
+.card { background:var(--bg); border-radius:12px; padding:16px 20px; }
+.card-outline { background:white; border:1.5px solid var(--light); border-radius:12px; padding:16px 20px; }
+.card-dark { background:var(--dark); border-radius:12px; padding:16px 20px; color:white; }
+
+/* 바 차트 */
+.bar { margin-bottom:8px; }
+.bar-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; }
+.bar-name { font-size:11.5pt; font-weight:600; }
+.bar-score { font-size:12pt; font-weight:800; }
+.bar-track { height:10px; background:#E2E8F0; border-radius:5px; position:relative; overflow:visible; }
+.bar-fill { height:100%; border-radius:5px; }
+.bar-mark { position:absolute; top:-3px; width:2px; height:16px; border-radius:1px; }
+
+/* 태그 */
+.tag { display:inline-block; padding:4px 11px; border-radius:6px; font-size:9pt; font-weight:600; margin:2px 3px 2px 0; }
+.tag-co { background:#DCFCE7; color:#166534; } .tag-cr { background:#FFF7ED; color:#9A3412; }
+.tag-su { background:#DBEAFE; color:#1E40AF; } .tag-ar { background:#EDE9FE; color:#5B21B6; }
+.tag-good { background:#DCFCE7; color:#166534; } .tag-warn { background:#FEF9C3; color:#854D0E; }
+.tag-bad { background:#FEE2E2; color:#991B1B; } .tag-muted { background:#F1F5F9; color:#64748B; }
+
+/* 페이지 푸터 */
+.pg-foot { position:absolute; bottom:10mm; left:24mm; right:24mm; display:flex; justify-content:space-between; font-size:7.5pt; color:#CBD5E1; }
+.pg-head { position:absolute; top:12mm; left:24mm; right:24mm; display:flex; justify-content:space-between; font-size:8pt; color:var(--muted); }
+
+/* 구분선 */
+.divider { border:none; height:1px; background:var(--light); margin:16px 0; }
+.divider-bold { border:none; height:3px; background:var(--text); margin:14px 0; }
+
+/* 체크리스트 */
+.check-item { display:flex; gap:10px; padding:6px 0; font-size:11.5pt; align-items:flex-start; }
+.check-box { width:15px; height:15px; border:2px solid var(--muted); border-radius:4px; flex-shrink:0; margin-top:2px; }
+
+/* 게이지 원 */
+.gauge { display:inline-flex; align-items:center; justify-content:center; border-radius:50%; font-weight:900; color:white; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- COVER -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page bg-dark" style="display:flex; flex-direction:column; justify-content:space-between; padding:36mm 30mm;">
+  <div>
+    <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:6px;">
+      <span style="font-size:60pt; font-weight:900; color:var(--co); letter-spacing:-2px;">FACE</span>
+      <span style="font-size:16pt; font-weight:400; color:#64748B;">career report</span>
+    </div>
+    <div style="font-size:14pt; font-weight:400; color:#64748B; margin-top:10px; letter-spacing:1px;">나다운 커리어를 마주하는 시간</div>
+    <div style="width:60px; height:4px; background:var(--co); border-radius:2px; margin-top:12px;"></div>
+  </div>
+  <div>
+    <div style="font-size:18pt; font-weight:300; color:#94A3B8; margin-bottom:6px;">{{USER_NAME}}님의 FACE 리포트</div>
+    <div style="font-size:11.5pt; color:#475569;">{{DIAGNOSIS_DATE}} 진단 &nbsp;·&nbsp; DA-SH UNIV</div>
+  </div>
+  <div class="flex justify-between items-center">
+    <div style="font-size:22pt; font-weight:900; letter-spacing:4px; color:var(--co);">DA-SH</div>
+    <div style="font-size:8pt; color:#475569; text-align:right;">Focus · Anchor · Capacity · Energy<br>기반 맞춤 커리어 솔루션</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 편지 페이지 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding:30mm 28mm 24mm; display:flex; flex-direction:column; justify-content:center;">
+  <div style="margin-bottom:28px;">
+    <div style="font-size:18pt; font-weight:800; color:var(--co); margin-bottom:4px;">{{USER_NAME}}님에게 드리는 말씀</div>
+    <div style="width:40px; height:3px; background:var(--co); border-radius:2px;"></div>
+  </div>
+
+  <div style="font-size:11.5pt; line-height:2.2; color:#334155;">
+    <p style="margin-bottom:16px;">
+      {{USER_NAME}}님, 안녕하세요.
+    </p>
+    <p style="margin-bottom:16px;">
+      우리는 <strong>"나는 누구인가"</strong>에 대해 충분히 고민할 시간을 갖지 못했습니다.<br>
+      누가 하라고 시키는 사람도 없었고, 앞만 보며 달려왔습니다.<br>
+      학교에서도, 사회에서도, 정작 가장 중요한 질문은 빠져 있었습니다.
+    </p>
+    <p style="margin-bottom:16px;">
+      삶은 <strong>각자의 방정식을 찾아가는 과정</strong>이라고 생각합니다.<br>
+      모든 것이 변수로 가득 차 있고, 이걸 나만의 방식으로 하나씩<br>
+      <strong>상수</strong>로 만들어 나가야 하는 게임입니다.
+    </p>
+    <p style="margin-bottom:16px;">
+      세상의 모든 것은 내 마음대로 되지 않는 정말 <strong>변수</strong>입니다.<br>
+      하지만 어렵더라도, 가장 높은 확률로 상수를 만들 수 있는 것이 있습니다.<br>
+      바로 <strong style="color:var(--co);">'나'</strong>입니다.
+    </p>
+    <p style="margin-bottom:16px;">
+      내가 어떤 것을 잘하는지, 못하는지.<br>
+      무엇을 좋아하는지, 무엇을 싫어하는지.<br>
+      어떤 삶을 살고 싶은지.<br>
+      이것이 있어야, 나를 채워줄 사람도 찾고,<br>
+      필요한 경험도 때에 맞게 찾을 수 있습니다.
+    </p>
+    <p style="margin-bottom:0;">
+      이번 FACE 커리어 진단을 통해<br>
+      각자의 방정식에서 <strong>첫 번째 상수인 '나'</strong>를 찾아가시길 바랍니다.
+    </p>
+  </div>
+
+  <div style="margin-top:32px; text-align:right;">
+    <div style="font-size:11pt; color:#94A3B8; margin-bottom:6px;">나다운 커리어를 마주하는 시간</div>
+    <div style="font-size:16pt; font-weight:900; color:var(--co); letter-spacing:3px;">DA-SH</div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CREDIBILITY PAGE 1: 학술 기반 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:28mm;">
+  <div style="margin-bottom:24px;">
+    <div style="font-size:13pt; font-weight:800; color:var(--co); letter-spacing:2px; margin-bottom:6px;">ABOUT FACE</div>
+    <div class="t-h1" style="font-size:26pt; line-height:1.3;">이 진단은 <strong>학술 연구</strong>와<br><strong>실무 데이터</strong>에 기반합니다</div>
+  </div>
+
+  <div class="t-body mb-md" style="max-width:92%;">
+    FACE 커리어 진단은 특정 기업의 상용 도구를 변형한 것이 아닙니다.<br>
+    <strong>공공 학술 이론</strong>과 <strong>한국 직무 표준 데이터</strong>를 기반으로 독립 설계되었습니다.
+  </div>
+
+  <!-- 학술 근거 -->
+  <div class="t-h4 mb-sm" style="color:var(--co);">📚 학술적 기반</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+    <div class="card" style="border-left:4px solid var(--co); padding:14px 18px;">
+      <div style="font-weight:800; font-size:12pt; margin-bottom:4px;">Holland RIASEC 이론</div>
+      <div class="t-small" style="line-height:1.7;">John L. Holland (1959~). 직업심리학에서 가장 널리 검증된 직업 흥미 이론. 50년간 수천 편의 학술 논문으로 검증. 미국 노동부 O*NET의 이론적 기반.</div>
+      <div class="t-small mt-xs" style="color:var(--co);">→ 이론적 프레임워크를 참고하여 FACE 고유의 유형 체계를 독립 설계</div>
+      <div class="t-small" style="color:#94A3B8; font-size:8pt;">※ Holland의 상용 검사 도구(SDS)의 문항·점수 체계는 사용하지 않았습니다</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--cr); padding:14px 18px;">
+      <div style="font-weight:800; font-size:12pt; margin-bottom:4px;">Schein Career Anchors 이론</div>
+      <div class="t-small" style="line-height:1.7;">Edgar Schein (MIT, 1978~). 커리어 의사결정의 핵심 가치관을 설명하는 이론. 전 세계 경영대학원에서 커리어 교육의 표준으로 사용.</div>
+      <div class="t-small mt-xs" style="color:var(--cr);">→ 가치관 구조의 학술적 개념을 참고하여 FACE 고유의 문항을 독립 설계</div>
+      <div class="t-small" style="color:#94A3B8; font-size:8pt;">※ Schein의 상용 검사(Career Anchors Self-Assessment)의 40문항은 사용하지 않았습니다</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--su); padding:14px 18px;">
+      <div style="font-weight:800; font-size:12pt; margin-bottom:4px;">Big Five 성격 이론</div>
+      <div class="t-small" style="line-height:1.7;">Costa & McCrae (1992). 심리학에서 가장 강력한 실증적 지지를 받는 성격 이론. Openness × Conscientiousness 축이 일하는 방식의 핵심 차이를 설명.</div>
+      <div class="t-small mt-xs" style="color:var(--su);">→ 공공 학술 이론의 차원 개념을 참고하여 Exploring↔Structuring 축 독립 설계</div>
+      <div class="t-small" style="color:#94A3B8; font-size:8pt;">※ NEO-PI-R 등 상용 검사의 문항·점수 체계는 사용하지 않았습니다</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--ar); padding:14px 18px;">
+      <div style="font-weight:800; font-size:12pt; margin-bottom:4px;">SDT 자기결정이론 + JD-R 모델</div>
+      <div class="t-small" style="line-height:1.7;">Deci & Ryan (1985). 동기의 3대 욕구(자율·유능·관계) 이론. Bakker & Demerouti (2006). 직무 요구-자원 모델로 몰입과 소진을 설명.</div>
+      <div class="t-small mt-xs" style="color:var(--ar);">→ 이론적 프레임워크를 참고하여 Energy 모듈의 문항을 독립 설계</div>
+      <div class="t-small" style="color:#94A3B8; font-size:8pt;">※ SDT 공식 설문지의 문항을 그대로 사용하지 않았습니다</div>
+    </div>
+  </div>
+
+  <!-- 실무 데이터 -->
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CREDIBILITY PAGE 2: 실무 데이터 + 독립성 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:28mm;">
+  <div class="t-h4 mb-sm" style="color:var(--su);">🇰🇷 한국 실무 데이터 기반</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+    <div class="rounded-lg p-md" style="background:#EFF6FF; border:1.5px solid #BFDBFE;">
+      <div style="font-weight:800; font-size:12pt; color:#1E40AF; margin-bottom:4px;">NCS 국가직무능력표준</div>
+      <div class="t-small" style="color:#1E3A5F; line-height:1.7;">한국산업인력공단이 개발한 <strong>공공 자산</strong>. 대한민국 모든 산업의 직무를 체계적으로 분류하고, 각 직무에 필요한 역량을 정의한 국가 표준입니다.</div>
+      <div class="t-small mt-xs" style="color:#1D4ED8;">→ 32개 역량 정의 + 47개 직무 분류의 기반</div>
+    </div>
+    <div class="rounded-lg p-md" style="background:#F0FDF4; border:1.5px solid #BBF7D0;">
+      <div style="font-weight:800; font-size:12pt; color:#15803D; margin-bottom:4px;">O*NET Skills Framework</div>
+      <div class="t-small" style="color:#166534; line-height:1.7;">미국 노동부가 운영하는 세계 최대 <strong>공공 직업 정보</strong> 시스템. 1,000개+ 직업의 역량, 지식, 기술을 데이터베이스화. NCS와 교차 검증하여 역량 체계의 보편성을 확보했습니다.</div>
+      <div class="t-small mt-xs" style="color:#15803D;">→ 역량 클러스터 분류 + 직무-역량 매핑 보완</div>
+    </div>
+  </div>
+
+  <!-- 독립성 선언 -->
+  <div class="card-dark" style="padding:22px 26px;">
+    <div style="display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;">
+      <div style="font-size:32pt; margin-top:4px;">🔒</div>
+      <div>
+        <div style="font-weight:800; font-size:14pt; margin-bottom:8px;">독립적으로 설계된 진단 도구</div>
+        <div style="font-size:11pt; color:#94A3B8; line-height:1.9;">
+          FACE는 <strong style="color:white;">이론을 참고</strong>했지, <strong style="color:white;">검사를 복사</strong>하지 않았습니다.<br><br>
+          MBTI, DISC, StrengthsFinder, SDS, NEO-PI-R 등 기존 상용 진단의
+          <strong style="color:#EF4444;">문항, 점수 체계, 해석 방식을 일체 사용하지 않습니다.</strong><br><br>
+          공공 학술 이론의 개념적 프레임워크 위에 FACE 고유의 문항을 독립 설계하고,
+          <strong style="color:white;">한국 NCS 공공 데이터</strong>와 <strong style="color:white;">미국 O*NET 공공 데이터</strong>를 기반으로
+          47개 직무 × 32개 역량을 직접 매핑했습니다.<br><br>
+          <strong style="color:var(--co);">저작권 저촉 없는 순수 자체 개발 진단입니다.</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>2</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- INTRO 1: 퍼널 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:20mm;">
+  <div class="t-h1 mb-md">FACE는 이런 진단입니다</div>
+  <div class="t-body mb-md" style="max-width:88%;">
+    "나에게 맞는 일은 뭘까?"<br>
+    이 질문에 답하려면, 성격 유형 하나로는 부족합니다.<br>
+    FACE는 <strong>4단계 깔때기</strong>를 통해 당신만의 답을 찾아갑니다.
+  </div>
+
+  <!-- 퍼널 -->
+  <div style="margin:0 auto; max-width:95%;">
+    <!-- F -->
+    <div style="background:#F0FDF4; border:2px solid #BBF7D0; border-radius:16px 16px 10px 10px; padding:20px 26px; margin-bottom:4px;">
+      <div class="flex justify-between items-center">
+        <div style="flex:1;">
+          <div class="t-label fc-co mb-xs">F — Focus · 집중</div>
+          <div class="t-h3" style="color:#15803D; margin-bottom:4px;">나는 일할 때 무엇에 집중하는 사람인가?</div>
+          <div class="t-small" style="color:#166534; line-height:1.7;">
+            사람에게 집중하는지, 과업에 집중하는지. 새로운 것을 탐색하는지, 체계를 만드는지.<br>
+            당신이 <strong>자연스럽게 집중하는 것</strong>을 읽어, 커리어의 큰 방향을 잡아줍니다.
+          </div>
+        </div>
+        <div style="font-size:48pt; font-weight:900; color:#BBF7D0; margin-left:16px;">F</div>
+      </div>
+    </div>
+
+    <!-- A -->
+    <div style="background:#FFFBEB; border:2px solid #FDE68A; border-radius:10px; padding:20px 26px; margin:0 20px 4px; ">
+      <div class="flex justify-between items-center">
+        <div style="flex:1;">
+          <div class="t-label fc-cr mb-xs">A — Anchor · 가치관</div>
+          <div class="t-h3" style="color:#B45309; margin-bottom:4px;">나는 일에서 무엇을 포기할 수 없는가?</div>
+          <div class="t-small" style="color:#92400E; line-height:1.7;">
+            성장인지 안정인지. 어떤 분야에 마음이 끌리는지.<br>
+            <strong>가치관과 관심사</strong>를 읽어, 맞는 조직 문화와 산업을 좁혀줍니다.
+          </div>
+        </div>
+        <div style="font-size:48pt; font-weight:900; color:#FDE68A; margin-left:16px;">A</div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div style="background:#EFF6FF; border:2px solid #BFDBFE; border-radius:10px; padding:20px 26px; margin:0 40px 4px;">
+      <div class="flex justify-between items-center">
+        <div style="flex:1;">
+          <div class="t-label fc-su mb-xs">C — Capacity · 역량</div>
+          <div class="t-h3" style="color:#1D4ED8; margin-bottom:4px;">지금 무엇을 잘하고, 무엇을 키워야 하는가?</div>
+          <div class="t-small" style="color:#1E40AF; line-height:1.7;">
+            32개 역량을 측정하여, <strong>어떤 직무에 얼마나 맞는지</strong> 구체적으로 알려줍니다.<br>
+            어떤 규모의 회사, 어떤 직무, 어떤 회사를 추천하는지까지.
+          </div>
+        </div>
+        <div style="font-size:48pt; font-weight:900; color:#BFDBFE; margin-left:16px;">C</div>
+      </div>
+    </div>
+
+    <!-- E -->
+    <div style="background:#F5F3FF; border:2px solid #DDD6FE; border-radius:10px 10px 16px 16px; padding:20px 26px; margin:0 60px 0;">
+      <div class="flex justify-between items-center">
+        <div style="flex:1;">
+          <div class="t-label fc-ar mb-xs">E — Energy · 마음 상태</div>
+          <div class="t-h3" style="color:#6D28D9; margin-bottom:4px;">지금 움직일 준비가 되었는가?</div>
+          <div class="t-small" style="color:#5B21B6; line-height:1.7;">
+            에너지가 충분한지, 회복이 먼저 필요한지.<br>
+            <strong>지금 도전할 타이밍인지</strong> 안내합니다.
+          </div>
+        </div>
+        <div style="font-size:48pt; font-weight:900; color:#DDD6FE; margin-left:16px;">E</div>
+      </div>
+    </div>
+
+    <!-- 화살표 -->
+    <div class="text-center" style="margin:14px 0 10px;">
+      <div style="width:40px; height:40px; background:var(--dark); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:white; font-size:16pt;">↓</div>
+    </div>
+
+    <!-- 결과 박스 -->
+    <div class="card-dark" style="margin:0 30px; padding:22px 28px;">
+      <div class="text-center t-label" style="color:#94A3B8; margin-bottom:10px;">FACE가 알려주는 것</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; font-size:11.5pt;">
+        <div class="flex gap-sm items-center"><span style="width:8px; height:8px; border-radius:50%; background:var(--co); flex-shrink:0;"></span> 어떤 <strong>방향</strong>의 일이 나다운지</div>
+        <div class="flex gap-sm items-center"><span style="width:8px; height:8px; border-radius:50%; background:var(--cr); flex-shrink:0;"></span> 어떤 <strong>규모·문화</strong>의 조직이 맞는지</div>
+        <div class="flex gap-sm items-center"><span style="width:8px; height:8px; border-radius:50%; background:var(--su); flex-shrink:0;"></span> 어떤 <strong>직무와 회사</strong>를 추천하는지</div>
+        <div class="flex gap-sm items-center"><span style="width:8px; height:8px; border-radius:50%; background:var(--ar); flex-shrink:0;"></span> 지금 <strong>도전할 타이밍</strong>인지</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>2</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- INTRO 2: 상세 설명 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:28mm;">
+  <div class="t-h2 mb-md">조금 더 자세히 알려드릴게요</div>
+
+  <!-- F -->
+  <div class="card mb-md" style="border-left:5px solid var(--co); background:#F0FDF4;">
+    <div class="t-h4 fc-co mb-xs">F — Focus: 일할 때 무엇에 집중하는가</div>
+    <div class="t-body">
+      당신이 일할 때 <strong>사람</strong>에게 자연스럽게 집중하는지, <strong>시스템이나 과업</strong>에 집중하는지.
+      새로운 가능성을 <strong>탐색</strong>하는 데 집중하는지, <strong>체계를 만드는</strong> 데 집중하는지.
+    </div>
+    <div class="t-body mt-xs">
+      이 두 축으로 당신이 자연스럽게 집중하는 것을 읽고, 4가지 유형 중 가장 나다운 방향을 알려줍니다.
+      같은 일을 해도 "무엇에 집중하느냐"가 성과와 만족도를 결정하니까요.
+    </div>
+    <div class="t-small mt-sm" style="color:var(--co);">→ 교감형(Connector) · 창작형(Creator) · 운영형(Supporter) · 설계형(Architect)</div>
+  </div>
+
+  <!-- A -->
+  <div class="card mb-md" style="border-left:5px solid var(--cr); background:#FFFBEB;">
+    <div class="t-h4 fc-cr mb-xs">A — Anchor: 가치관과 관심사</div>
+    <div class="t-body">
+      같은 유형이라도 <strong>무엇을 중요하게 여기는지</strong>에 따라 완전히 다른 커리어를 걷게 됩니다.
+      성장을 추구하는 교감형는 스타트업 BD로, 안정을 추구하는 교감형는 대기업 HR로 갑니다.
+    </div>
+    <div class="t-body mt-xs">
+      6가지 가치관과 관심 영역을 함께 읽어, 당신에게 맞는 <strong>조직 문화, 회사 규모, 산업</strong>까지 좁혀줍니다.
+    </div>
+    <div class="t-small mt-sm" style="color:var(--cr);">→ 전문성 · 성장 · 자율 · 안정 · 기여 · 균형 + 관심 산업 영역</div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>3</span></div>
+</div>
+
+<div class="page" style="padding-top:28mm;">
+  <!-- C -->
+  <div class="card mb-md" style="border-left:5px solid var(--su); background:#EFF6FF;">
+    <div class="t-h4 fc-su mb-xs">C — Capacity: 역량과 직무 매칭</div>
+    <div class="t-body">
+      방향과 가치관이 정해졌으면, 이제 <strong>"지금 어디까지 할 수 있는가"</strong>를 봅니다.
+      32개 직무 역량을 측정하여 47개 직무와 매칭하고, 각 직무에서 S급/A급/평균 어디쯤인지 보여줍니다.
+    </div>
+    <div class="t-body mt-xs">
+      역량은 <strong>4가지 클러스터</strong>로 나뉩니다: 통찰·사고(무엇을 볼 것인가), 실행·추진(어떻게 해낼 것인가), 관계·소통(누구와 함께할 것인가), 창조·설계(무엇을 만들 것인가).
+    </div>
+    <div class="t-small mt-sm" style="color:var(--su);">→ 추천 직무(Core) · 확장 가능 직무(Expandable) · 추천 회사 · 벤치마크</div>
+  </div>
+
+  <!-- E -->
+  <div class="card mb-md" style="border-left:5px solid var(--ar); background:#F5F3FF;">
+    <div class="t-h4 fc-ar mb-xs">E — Energy: 마음의 준비 상태</div>
+    <div class="t-body">
+      아무리 좋은 방향을 찾아도, <strong>지금 에너지가 없으면 움직일 수 없습니다.</strong>
+      동기부여가 충분한지, 행동으로 옮기고 있는지, 혹시 번아웃은 아닌지 확인합니다.
+    </div>
+    <div class="t-body mt-xs">
+      도전할 준비가 되었다면 <strong>구체적 30일 액션플랜</strong>을, 회복이 필요하다면 <strong>마음 돌봄 가이드</strong>를 드립니다.
+    </div>
+    <div class="t-small mt-sm" style="color:var(--ar);">→ 🟢 도전 가능 · 🟡 탐색 단계 · 🔴 회복 우선</div>
+  </div>
+
+  <!-- 마무리 -->
+  <div class="card-dark text-center" style="padding:20px 28px;">
+    <div style="font-size:11pt; line-height:1.9;">
+      <strong style="color:var(--co);">F</strong>ocus로 방향을 잡고,
+      <strong style="color:var(--cr);">A</strong>nchor로 가치를 확인하고,
+      <strong style="color:var(--su);">C</strong>apacity로 구체적 답을 찾고,
+      <strong style="color:var(--ar);">E</strong>nergy로 타이밍을 결정합니다.
+    </div>
+    <div class="mt-sm" style="font-size:11.5pt; color:#94A3B8;">이제 {{USER_NAME}}님의 FACE를 읽어보겠습니다.</div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>4</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 한 눈에 보는 나 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:18mm;">
+  <div class="pg-head"><span class="fc-co" style="font-weight:700;">Part 1</span><span>한 눈에 보는 나</span></div>
+
+  <div class="t-h1">한 눈에 보는 나</div>
+  <div class="t-body mb-md" style="font-size:13pt; line-height:2; color:#334155;">
+    <span style="color:var(--co); font-weight:700;">{{GLANCE_FOCUS_DESC}}</span> 당신은,
+    <span style="color:var(--cr); font-weight:700;">{{GLANCE_ANCHOR_DESC}}</span> 사람입니다.
+    지금은 방향을 확인하며 움직이는 단계로,
+    <span style="font-weight:700;">{{GLANCE_TOP_ORG_JOB}}</span>에서 가장 빛날 수 있습니다.
+  </div>
+
+  <!-- F + A 카드 -->
+  <div class="grid-2 mb-sm">
+    <div class="rounded-lg p-lg" style="background:linear-gradient(160deg, #F0FDF4 0%, #DCFCE7 100%);">
+      <div class="t-label fc-co mb-xs">FOCUS</div>
+      <div style="font-size:24pt; font-weight:900; color:#15803D;">{{SUBTYPE_NAME}}</div>
+      <div class="t-small mt-xs" style="color:#166534;">{{FOCUS_PRIMARY_EN}} × {{FOCUS_SECONDARY_EN}}</div>
+      <div class="mt-sm t-small" style="color:#166534; line-height:1.6;">{{FOCUS_SHORT_DESC}}</div>
+    </div>
+    <div class="rounded-lg p-lg" style="background:linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 100%);">
+      <div class="t-label fc-cr mb-xs">ANCHOR</div>
+      <div style="font-size:18pt; font-weight:800; color:#B45309;">{{ANCHOR_1_EMOJI}} {{ANCHOR_1_KOREAN}} &nbsp;×&nbsp; {{ANCHOR_2_EMOJI}} {{ANCHOR_2_KOREAN}}</div>
+      <div class="mt-sm" style="font-size:9pt; color:#92400E; line-height:1.6;">{{ANCHOR_COMBO_SHORT}}</div>
+      <div class="mt-sm">{{ANCHOR_INTEREST_TAGS}}</div>
+    </div>
+  </div>
+
+  <div class="grid-2 mb-md">
+    <!-- C: 강점 TOP 5 + 성장 포인트 TOP 3 -->
+    <div class="card" style="padding:16px 20px;">
+      <div class="t-label fc-su mb-sm">CAPACITY — 역량</div>
+      <div style="font-size:10pt; font-weight:700; color:var(--co); margin-bottom:6px;">💪 강점</div>
+      <!-- CAP_BARS_PLACEHOLDER -->
+      <div style="font-size:10pt; font-weight:700; color:var(--bad); margin-bottom:6px;">📈 성장 포인트</div>
+      <!-- GROWTH_BARS_PLACEHOLDER -->
+    </div>
+    <!-- E -->
+    <div class="card">
+      <div class="t-label fc-ar mb-sm">ENERGY — 마음 상태</div>
+      <div class="text-center mt-sm">
+        <div style="display:inline-block; background:{{ENERGY_BADGE_BG}}; padding:6px 18px; border-radius:8px; font-weight:700; color:{{ENERGY_BADGE_FG}}; font-size:11pt;">{{ENERGY_EMOJI}} {{ENERGY_LABEL}}</div>
+      </div>
+      <div class="text-center mt-md">
+        <div style="font-size:20pt; font-weight:900; color:var(--text);">{{ENERGY_STAGE}}</div>
+      </div>
+      <div class="text-center mt-sm t-small" style="line-height:1.7;">
+        {{ENERGY_SHORT_DESC}}
+      </div>
+    </div>
+  </div>
+
+  <!-- Core TOP 3 -->
+  <div class="t-h4 mb-sm">🎯 지금 가장 잘 맞는 직무</div>
+  <div class="grid-3">
+    <div class="card-outline text-center" style="padding:16px;">
+      <div class="t-small" style="color:var(--muted);">Core 1</div>
+      <div style="font-size:14pt; font-weight:800; margin:6px 0;">{{CORE_JOB_1}}</div>
+      <div class="gauge" style="width:60px; height:60px; font-size:18pt; background:{{CORE_JOB_1_SCORE_BG}};">{{CORE_JOB_1_SCORE}}</div>
+      <div class="t-small mt-xs">{{CORE_JOB_1_CAT}}</div>
+    </div>
+    <div class="card-outline text-center" style="padding:16px;">
+      <div class="t-small" style="color:var(--muted);">Core 2</div>
+      <div style="font-size:14pt; font-weight:800; margin:6px 0;">{{CORE_JOB_2}}</div>
+      <div class="gauge" style="width:60px; height:60px; font-size:18pt; background:{{CORE_JOB_2_SCORE_BG}};">{{CORE_JOB_2_SCORE}}</div>
+      <div class="t-small mt-xs">{{CORE_JOB_2_CAT}}</div>
+    </div>
+    <div class="card-outline text-center" style="padding:16px;">
+      <div class="t-small" style="color:var(--muted);">Core 3</div>
+      <div style="font-size:14pt; font-weight:800; margin:6px 0;">{{CORE_JOB_3}}</div>
+      <div class="gauge" style="width:60px; height:60px; font-size:18pt; background:{{CORE_JOB_3_SCORE_BG}};">{{CORE_JOB_3_SCORE}}</div>
+      <div class="t-small mt-xs">{{CORE_JOB_3_CAT}}</div>
+    </div>
+  </div>
+
+  <div class="text-center mt-md">
+    <span class="tag tag-co">추천 조직: {{TOP_ORG_KOREAN}}</span>
+    <span class="tag tag-cr">추천 직무: {{CORE_JOB_1}}</span>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>4</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════ -->
+<!-- F 간지 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="background:linear-gradient(160deg, #15803D 0%, #22C55E 50%, #86EFAC 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; color:white;">
+  <div style="font-size:72pt; font-weight:900; opacity:.15; position:absolute; top:30%; letter-spacing:8px;">FOCUS</div>
+  <div style="width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+    <div style="font-size:36pt; font-weight:900;">F</div>
+  </div>
+  <div class="t-hero" style="color:white;">Focus</div>
+  <div style="width:50px; height:4px; background:rgba(255,255,255,.4); border-radius:2px; margin:16px 0;"></div>
+  <div style="font-size:14pt; font-weight:400; opacity:.8;">나는 일할 때 무엇에 집중하는 사람인가</div>
+  <div style="font-size:11pt; font-weight:300; opacity:.5; margin-top:8px;">집중하는 것 · 4가지 유형 · 빛과 그림자</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 4유형 소개 먼저 (순서 변경) -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:18mm;">
+  <div class="pg-head"><span class="fc-co" style="font-weight:700;">Part 2</span><span>나는 누구인가 — 4가지 Focus 유형</span></div>
+
+  <div class="t-h2 mb-xs">FACE의 4가지 유형</div>
+  <div class="t-body mb-sm" style="font-size:10.5pt;">모든 사람은 4가지 집중 방식을 모두 갖고 있지만, 자연스럽게 집중하는 것이 다릅니다.</div>
+
+  <div class="grid-2 gap-sm">
+    <!-- 교감형 -->
+    <div class="rounded-lg" style="background:linear-gradient(160deg, #F0FDF4, #DCFCE7); border:2px solid #BBF7D0; padding:14px;">
+      <div style="width:44px; height:44px; border-radius:50%; background:var(--co); display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-size:22pt;">🤝</div>
+      <div class="text-center">
+        <div style="font-size:16pt; font-weight:900; color:#15803D;">교감형</div>
+        <div class="t-small fc-co">Connector · 사람 × 탐색에 집중</div>
+      </div>
+      <div style="height:1px; background:#BBF7D0; margin:8px 0;"></div>
+      <div class="t-body" style="font-size:10pt;">
+        <strong>사람과 사람, 사람과 기회를 연결하는 사람.</strong>
+        공감으로 신뢰를 만들고, 관계 속에서 시너지를 이끌어냅니다.
+      </div>
+      <div style="height:1px; background:#BBF7D0; margin:8px 0;"></div>
+      <div class="t-small" style="color:#166534; line-height:1.6; font-size:9pt;">
+        공감력 · 협상력 · 코칭 · 네트워킹 · 고객통찰력
+      </div>
+      <div class="mt-xs">
+        <span class="tag tag-co">영업</span><span class="tag tag-co">HR</span><span class="tag tag-co">BD</span>
+      </div>
+    </div>
+
+    <!-- 창작형 -->
+    <div class="rounded-lg" style="background:linear-gradient(160deg, #FFFBEB, #FEF3C7); border:2px solid #FDE68A; padding:14px;">
+      <div style="width:44px; height:44px; border-radius:50%; background:var(--cr); display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-size:22pt;">💡</div>
+      <div class="text-center">
+        <div style="font-size:16pt; font-weight:900; color:#9A3412;">창작형</div>
+        <div class="t-small fc-cr">Creative · 과업 × 탐색에 집중</div>
+      </div>
+      <div style="height:1px; background:#FDE68A; margin:8px 0;"></div>
+      <div class="t-body" style="font-size:10pt;">
+        <strong>기존에 없던 것을 상상하고 만들어내는 사람.</strong>
+        독창적 관점으로 새로운 가능성을 열고, 변화를 두려워하지 않습니다.
+      </div>
+      <div style="height:1px; background:#FDE68A; margin:8px 0;"></div>
+      <div class="t-small" style="color:#9A3412; line-height:1.6; font-size:9pt;">
+        창의력 · 스토리텔링 · 경험설계 · 관점전환
+      </div>
+      <div class="mt-xs">
+        <span class="tag tag-cr">디자인</span><span class="tag tag-cr">기획</span><span class="tag tag-cr">R&D</span>
+      </div>
+    </div>
+
+    <!-- 운영형 -->
+    <div class="rounded-lg" style="background:linear-gradient(160deg, #EFF6FF, #DBEAFE); border:2px solid #BFDBFE; padding:14px;">
+      <div style="width:44px; height:44px; border-radius:50%; background:var(--su); display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-size:22pt;">🛡️</div>
+      <div class="text-center">
+        <div style="font-size:16pt; font-weight:900; color:#1E40AF;">운영형</div>
+        <div class="t-small fc-su">Supporter · 사람 × 체계에 집중</div>
+      </div>
+      <div style="height:1px; background:#BFDBFE; margin:8px 0;"></div>
+      <div class="t-body" style="font-size:10pt;">
+        <strong>사람과 조직이 안정적으로 작동하도록 돌보는 사람.</strong>
+        꼼꼼한 배려와 체계적 지원으로 기반을 단단하게 만듭니다.
+      </div>
+      <div style="height:1px; background:#BFDBFE; margin:8px 0;"></div>
+      <div class="t-small" style="color:#1E40AF; line-height:1.6; font-size:9pt;">
+        공감력 · 정확성 · 책임감 · 프로세스관리
+      </div>
+      <div class="mt-xs">
+        <span class="tag tag-su">인사</span><span class="tag tag-su">교육</span><span class="tag tag-su">품질</span>
+      </div>
+    </div>
+
+    <!-- 설계형 -->
+    <div class="rounded-lg" style="background:linear-gradient(160deg, #F5F3FF, #EDE9FE); border:2px solid #DDD6FE; padding:14px;">
+      <div style="width:44px; height:44px; border-radius:50%; background:var(--ar); display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-size:22pt;">🔬</div>
+      <div class="text-center">
+        <div style="font-size:16pt; font-weight:900; color:#5B21B6;">설계형</div>
+        <div class="t-small fc-ar">Architect · 과업 × 체계에 집중</div>
+      </div>
+      <div style="height:1px; background:#DDD6FE; margin:8px 0;"></div>
+      <div class="t-body" style="font-size:10pt;">
+        <strong>복잡한 시스템을 분석하고 최적의 구조를 만드는 사람.</strong>
+        논리적 사고와 정확한 분석으로 문제를 깔끔하게 정리합니다.
+      </div>
+      <div style="height:1px; background:#DDD6FE; margin:8px 0;"></div>
+      <div class="t-small" style="color:#5B21B6; line-height:1.6; font-size:9pt;">
+        분석력 · 수리논리력 · 전략적사고 · 시장통찰력
+      </div>
+      <div class="mt-xs">
+        <span class="tag tag-ar">개발</span><span class="tag tag-ar">데이터</span><span class="tag tag-ar">재무</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-sm text-center t-small" style="color:var(--muted);">
+    캐릭터 일러스트는 추후 FACE 전용 캐릭터로 교체됩니다
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>6</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- {{USER_NAME}}님의 Focus 결과 (4유형 다음) -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-co" style="font-weight:700;">F</span><span>{{USER_NAME}}님의 Focus 결과</span></div>
+
+  <div class="flex justify-between items-center mb-md">
+    <div class="t-h1" style="margin:0;">{{USER_NAME}}님의 Focus</div>
+    <div style="background:var(--co); color:white; padding:8px 20px; border-radius:10px; font-weight:800; font-size:12pt;">{{FOCUS_PRIMARY_KOREAN}}</div>
+  </div>
+
+  <!-- 2x2 -->
+  <div class="rounded-lg" style="background:var(--bg); padding:18px 20px; margin-bottom:14px;">
+    <div class="text-center t-small mb-sm">사람 ↔ 과업 &nbsp;×&nbsp; 탐색 ↔ 체계</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+      <!-- FOCUS_2X2_GRID_PLACEHOLDER -->
+    </div>
+    <div class="text-center t-small mt-sm">주기능 {{FOCUS_PRIMARY_KOREAN}}({{FOCUS_PRIMARY_SCORE}}) → 부기능 {{FOCUS_SECONDARY_KOREAN}}({{FOCUS_SECONDARY_SCORE}}) → <strong>{{SUBTYPE_CODE}} {{SUBTYPE_NAME}}</strong></div>
+  </div>
+
+  <!-- Focus 해석 -->
+  <div class="card" style="padding:14px 18px; margin-bottom:12px;" id="focus-interpretation">
+    <!-- FOCUS_INTERP_PLACEHOLDER -->
+    <div class="t-body" style="font-size:11pt; line-height:1.9;">
+      <strong style="color:var(--co);">주기능 {{FOCUS_PRIMARY_KOREAN}}</strong>은 당신이 일할 때 가장 자연스럽게 에너지를 쏟는 방향입니다.
+      의식하지 않아도 사람과 관계에 먼저 집중하게 되며, 이 영역에서 가장 높은 성과와 만족을 경험합니다.<br><br>
+      <strong style="color:var(--cr);">부기능 {{FOCUS_SECONDARY_KOREAN}}</strong>은 주기능을 보완하는 두 번째 집중 방식입니다.
+      주기능만큼 자연스럽진 않지만, 상황에 따라 유연하게 활용할 수 있는 숨겨진 무기입니다.
+      이 두 가지가 결합되어 당신만의 고유한 스타일을 만듭니다.
+    </div>
+  </div>
+
+  <!-- 세부유형 해설 + 일러스트 -->
+  <!-- SUBTYPE_CARD_PLACEHOLDER -->
+  <div class="rounded-lg" style="background:#F0FDF4; border:2px solid #BBF7D0; padding:16px 20px; display:flex; gap:16px; align-items:center;">
+    <div style="flex-shrink:0; width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--co), #15803D); display:flex; align-items:center; justify-content:center; font-size:40pt;">🤝</div>
+    <div style="flex:1;">
+      <div style="font-size:20pt; font-weight:900; color:#15803D;">{{SUBTYPE_NAME}}</div>
+      <div class="t-small fc-co" style="margin-bottom:6px;">{{SUBTYPE_CODE}} — {{FOCUS_PRIMARY_EN}} × {{FOCUS_SECONDARY_EN}}</div>
+      <div class="t-body" style="font-size:11pt;">{{SUBTYPE_DESCRIPTION}}</div>
+      <div class="mt-sm" style="font-size:11pt;">
+        <strong style="color:var(--co);">강점</strong> — {{SUBTYPE_STRENGTH}}<br>
+        <strong style="color:var(--cr);">주의</strong> — {{SUBTYPE_CAUTION}}
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>8</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 빛과 그림자 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span style="color:{{FOCUS_COLOR}}; font-weight:700;">Part 2</span><span>나는 누구인가 — 빛과 그림자</span></div>
+  <div class="t-h2 mb-xs">빛과 그림자</div>
+  <div class="t-body mb-md" style="font-size:11pt; color:var(--sub);">모든 강점에는 그림자가 있습니다. 빛은 당신의 유형이 자연스럽게 발휘되는 모습이고, 그림자는 그 강점이 과해지거나 스트레스 상황에서 나타나는 이면입니다.</div>
+
+  <div class="grid-2 gap-lg mb-md">
+    <div>
+      <div class="t-h4 mb-sm" style="color:{{FOCUS_COLOR}};">☀️ 빛 — 당신이 빛나는 순간</div>
+      <div class="card mb-sm" style="border-left:4px solid {{FOCUS_COLOR}};"><div class="t-body">{{LIGHT_1}}</div></div>
+      <div class="card mb-sm" style="border-left:4px solid {{FOCUS_COLOR}};"><div class="t-body">{{LIGHT_2}}</div></div>
+      <div class="card mb-sm" style="border-left:4px solid {{FOCUS_COLOR}};"><div class="t-body">{{LIGHT_3}}</div></div>
+    </div>
+    <div>
+      <div class="t-h4 mb-sm" style="color:#64748B;">🌙 그림자 — 강점이 과해질 때</div>
+      <div class="card mb-sm" style="border-left:4px solid #CBD5E1;"><div class="t-body">{{SHADOW_1}}</div></div>
+      <div class="card mb-sm" style="border-left:4px solid #CBD5E1;"><div class="t-body">{{SHADOW_2}}</div></div>
+      <div class="card mb-sm" style="border-left:4px solid #CBD5E1;"><div class="t-body">{{SHADOW_3}}</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2 gap-md">
+    <div class="rounded-lg p-md" style="background:#F0FDF4;">
+      <div class="t-h4 mb-xs" style="color:{{FOCUS_COLOR}};">⚡ 에너지원</div>
+      <div class="t-body">{{FOCUS_ENERGY_SOURCE}}</div>
+    </div>
+    <div class="rounded-lg p-md" style="background:#FFFBEB;">
+      <div class="t-h4 mb-xs" style="color:#B45309;">🔋 번아웃 시그널</div>
+      <div class="t-body">{{FOCUS_BURNOUT}}</div>
+    </div>
+  </div>
+  <div class="grid-2 gap-md mt-md">
+    <div class="card-outline" style="border:2px solid {{FOCUS_COLOR}};">
+      <div class="t-h4 mb-xs" style="color:{{FOCUS_COLOR}};">✅ 이런 환경에서 빛납니다</div>
+      <div class="t-body">{{FOCUS_IDEAL_ENV}}</div>
+    </div>
+    <div class="card-outline" style="border:2px solid var(--bad);">
+      <div class="t-h4 mb-xs" style="color:var(--bad);">⚠️ 이런 환경은 피하세요</div>
+      <div class="t-body">{{FOCUS_RISK_ENV}}</div>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>7</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- Anchor -->
+<!-- ═══════════════════════════════════════ -->
+<!-- A 간지 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="background:linear-gradient(160deg, #9A3412 0%, #F97316 50%, #FDBA74 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; color:white; position:relative; overflow:hidden;">
+  <!-- 배경 닻 아이콘 -->
+  <div style="font-size:200pt; opacity:.06; position:absolute; top:15%; right:-5%;">⚓</div>
+  <div style="font-size:72pt; font-weight:900; opacity:.12; position:absolute; top:28%; letter-spacing:8px;">ANCHOR</div>
+  <!-- 내용 -->
+  <div style="width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; margin-bottom:20px; z-index:1;">
+    <div style="font-size:36pt; font-weight:900;">A</div>
+  </div>
+  <div class="t-hero" style="color:white; z-index:1;">Anchor</div>
+  <div style="width:50px; height:4px; background:rgba(255,255,255,.4); border-radius:2px; margin:16px 0; z-index:1;"></div>
+  <div style="font-size:14pt; font-weight:400; opacity:.9; z-index:1;">나는 일에서 무엇을 포기할 수 없는가</div>
+  <div style="font-size:12pt; font-weight:300; opacity:.7; margin-top:12px; line-height:1.8; max-width:75%; z-index:1;">
+    Anchor는 <strong>닻</strong>이라는 뜻입니다.<br>
+    거친 바다에서 배를 흔들리지 않게 잡아주는 닻처럼,<br>
+    당신의 커리어가 흔들릴 때 중심을 잡아주는 <strong>가치관</strong>입니다.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- Anchor 페이지 1: 가치관 버블 + 메인/서브 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-cr" style="font-weight:700;">Part 2</span><span>나는 누구인가 — Anchor</span></div>
+
+  <div class="t-h1 mb-xs">커리어 가치관</div>
+  <div class="t-body mb-md" style="max-width:92%;">
+    같은 유형이라도 <strong>무엇을 중요하게 여기는지</strong>에 따라 전혀 다른 커리어를 걷게 됩니다.
+    Anchor(닻)는 거친 바다에서 배를 잡아주듯, 커리어가 흔들릴 때 <strong>중심을 잡아주는 가치관</strong>입니다.
+    당신이 직업에서 <strong>절대 포기할 수 없는 것</strong>을 읽어, 맞는 조직과 문화를 찾아줍니다.
+  </div>
+
+  <!-- 버블 차트 (packed bubble, 글씨도 비례) -->
+  <div style="position:relative; width:440px; height:290px; margin:0 auto 12px;">
+    <!-- ANCHOR_BUBBLE_PLACEHOLDER -->
+  </div>
+
+  <!-- 읽는 법 -->
+  <div class="card" style="background:#F8FAFC; padding:14px 20px; margin-bottom:18px;">
+    <div class="t-h4 mb-xs" style="font-size:11.5pt;">📊 이 차트를 읽는 법</div>
+    <div class="t-body" style="font-size:11pt; line-height:1.8;">
+      6가지 가치관을 <strong>100점 만점</strong>으로 환산한 뒤, 점수에 비례하여 버블 크기를 그렸습니다.
+      버블이 <strong>클수록</strong> 당신에게 중요한 가치이고, <strong>작을수록</strong> 상대적으로 덜 중요한 가치입니다.
+      상위 2개가 당신의 커리어 의사결정을 지배하는 <strong>메인 가치</strong>와 <strong>서브 가치</strong>입니다.
+      나머지는 "중요하지 않다"는 뜻이 아니라, 선택의 순간에 양보할 수 있는 가치라는 뜻입니다.
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<!-- Anchor 메인/서브 상세 (별도 페이지) -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-cr" style="font-weight:700;">A</span><span>커리어 가치관 — 메인/서브</span></div>
+
+  <div class="t-h2 mb-md">당신의 핵심 가치</div>
+
+  <!-- ANCHOR_DETAIL_CARDS_PLACEHOLDER -->
+
+  <div class="card" style="background:#FFFBEB; border:1.5px solid #FDE68A;">
+    <div class="t-body text-center" style="font-style:italic; color:#92400E;">
+      <!-- ANCHOR_COMBO_PLACEHOLDER -->
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>8</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- Anchor 페이지 2: 나머지 가치관 해설 + 관심영역 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-cr" style="font-weight:700;">Part 2</span><span>나는 누구인가 — Anchor 상세</span></div>
+
+  <div class="t-h3 mb-sm">6가지 가치관, {{USER_NAME}}님은 이렇습니다</div>
+
+  <!-- ANCHOR_6CARDS_PLACEHOLDER -->
+
+  <!-- ANCHOR_INTERESTS_PLACEHOLDER -->
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>9</span></div>
+</div>
+
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-cr" style="font-weight:700;">A</span><span>나에게 맞는 조직</span></div>
+  <div class="t-h2 mb-xs">어떤 조직이 나와 맞을까?</div>
+  <div class="t-body mb-md">당신의 가치관(Anchor) 프로파일과 9개 기업 카테고리의 유사도를 비교했습니다.</div>
+  <div class="card mb-md" style="padding:20px 24px;">
+    <div class="bar"><div class="bar-top"><span class="bar-name">🚀 스타트업</span><span class="bar-score">{{ORG_1_SCORE}}%</span></div><div class="bar-track"><div class="bar-fill" style="width:{{ORG_1_SCORE}}%; background:var(--co);"></div></div></div>
+    <div class="bar"><div class="bar-top"><span class="bar-name">🌍 외국계</span><span class="bar-score">{{ORG_2_SCORE}}%</span></div><div class="bar-track"><div class="bar-fill" style="width:{{ORG_2_SCORE}}%; background:var(--su);"></div></div></div>
+    <div class="bar"><div class="bar-top"><span class="bar-name">🔬 강소기업</span><span class="bar-score">{{ORG_3_SCORE}}%</span></div><div class="bar-track"><div class="bar-fill" style="width:{{ORG_3_SCORE}}%;"></div></div></div>
+    <div class="bar"><div class="bar-top"><span class="bar-name">📋 공무원</span><span class="bar-score">{{ORG_4_SCORE}}%</span></div><div class="bar-track"><div class="bar-fill" style="width:{{ORG_4_SCORE}}%;"></div></div></div>
+    <div class="bar"><div class="bar-top"><span class="bar-name">🌱 소셜벤처</span><span class="bar-score">{{ORG_5_SCORE}}%</span></div><div class="bar-track"><div class="bar-fill" style="width:{{ORG_5_SCORE}}%;"></div></div></div>
+    <div class="t-small mt-sm" style="color:var(--muted);">9개 카테고리 전체 표시</div>
+  </div>
+  <div class="grid-2 gap-md">
+    <div class="card" style="border-left:5px solid var(--co); background:#F0FDF4;">
+      <div class="t-h4 fc-co mb-xs">{{ORG_TOP1_KOREAN}} ({{ORG_TOP1_SCORE}}%)</div>
+      <div class="t-body" style="font-size:11pt;">{{ORG_TOP1_DESC}}</div>
+    </div>
+    <div class="card" style="border-left:5px solid var(--su); background:#EFF6FF;">
+      <div class="t-h4 fc-su mb-xs">{{ORG_TOP2_KOREAN}} ({{ORG_TOP2_SCORE}}%)</div>
+      <div class="t-body" style="font-size:11pt;">{{ORG_TOP2_DESC}}</div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<div class="page bg-dark" style="padding-top:22mm;">
+  <div class="pg-head"><span style="color:{{FOCUS_COLOR}}; font-weight:700;">F</span><span style="color:#94A3B8;">×</span><span style="color:{{ANCHOR_COLOR}}; font-weight:700;">A</span><span style="color:#94A3B8;">&nbsp;&nbsp;Focus × Anchor 교차 해석</span></div>
+  <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+    <div style="width:40px; height:40px; border-radius:50%; background:{{FOCUS_COLOR}}; display:flex; align-items:center; justify-content:center; font-size:16pt; font-weight:900; color:white;">F</div>
+    <div style="font-size:18pt; color:#94A3B8;">×</div>
+    <div style="width:40px; height:40px; border-radius:50%; background:{{ANCHOR_COLOR}}; display:flex; align-items:center; justify-content:center; font-size:16pt; font-weight:900; color:white;">A</div>
+    <div style="font-size:11pt; color:#CBD5E1; margin-left:8px;">{{FOCUS_PRIMARY_KOREAN}} × {{ANCHOR_1_KOREAN}}·{{ANCHOR_2_KOREAN}}</div>
+  </div>
+  <div style="font-size:22pt; font-weight:900; color:white; line-height:1.3; margin-bottom:16px;">{{FA_BRIDGE_TITLE}}</div>
+  <div style="font-size:11pt; color:#94A3B8; line-height:1.8; margin-bottom:14px;">{{FA_BRIDGE_NARRATIVE}}</div>
+  <div style="height:1px; background:#1E293B; margin:12px 0;"></div>
+  <div style="font-size:14pt; font-weight:700; color:white; margin-bottom:12px;">이 조합이 가리키는 커리어 방향</div>
+  <div class="rounded p-md mb-sm" style="background:#1E293B; border-left:5px solid {{FOCUS_COLOR}};">
+    <div style="font-weight:700; color:white; font-size:13pt; margin-bottom:4px;">{{FA_CAREER_1}}</div>
+    <div style="font-size:10pt; color:#94A3B8;">추천 직무 #1</div>
+  </div>
+  <div class="rounded p-md mb-sm" style="background:#1E293B; border-left:5px solid {{ANCHOR_COLOR}};">
+    <div style="font-weight:700; color:white; font-size:13pt; margin-bottom:4px;">{{FA_CAREER_2}}</div>
+    <div style="font-size:10pt; color:#94A3B8;">추천 직무 #2</div>
+  </div>
+  <div class="rounded p-md mb-sm" style="background:#1E293B; border-left:5px solid #EAB308;">
+    <div style="font-weight:700; color:white; font-size:13pt; margin-bottom:4px;">{{FA_CAREER_3}}</div>
+    <div style="font-size:10pt; color:#94A3B8;">추천 직무 #3</div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span>9</span></div>
+</div>
+
+<div class="page bg-dark" style="padding-top:22mm;">
+  <div class="pg-head"><span style="color:var(--co); font-weight:700;">F</span><span style="color:#475569;">×</span><span style="color:var(--cr); font-weight:700;">A</span><span style="color:#64748B;">&nbsp;&nbsp;관심 산업 × 조직 교차 추천</span></div>
+  <div class="t-h3" style="color:white; margin-bottom:8px;">관심 산업 × 조직유형 교차 추천</div>
+  <div style="font-size:11pt; color:#94A3B8; line-height:1.8; margin-bottom:16px;">당신의 관심 영역({{INTEREST_1_KOREAN}}, {{INTEREST_2_KOREAN}})과 맞는 조직유형({{TOP_ORG_1}}, {{TOP_ORG_2}}, {{TOP_ORG_3}})을 교차하면 구체적인 방향이 나옵니다.</div>
+
+  <div style="display:grid; grid-template-columns:auto 1fr 1fr 1fr; gap:2px; border-radius:14px; overflow:hidden; margin-bottom:16px;">
+    <div style="background:#0F172A; padding:12px 16px;"></div>
+    <div style="background:#0F172A; color:white; padding:12px 16px; font-weight:700; text-align:center; font-size:10pt;">🚀 {{TOP_ORG_1}}</div>
+    <div style="background:#0F172A; color:white; padding:12px 16px; font-weight:700; text-align:center; font-size:10pt;">🌍 {{TOP_ORG_2}}</div>
+    <div style="background:#0F172A; color:white; padding:12px 16px; font-weight:700; text-align:center; font-size:10pt;">🔬 {{TOP_ORG_3}}</div>
+    <div style="background:#1E293B; padding:12px 16px; font-weight:700; color:{{INTEREST_1_COLOR}};">{{INTEREST_1_KOREAN}}</div>
+    <div style="background:#0F172A; padding:12px; font-size:10pt; color:#94A3B8;"><div style="font-weight:700; color:white; margin-bottom:4px;">{{ORG1_INT1_TITLE}}</div>{{ORG1_INT1_COMPANIES}}</div>
+    <div style="background:#0F172A; padding:12px; font-size:10pt; color:#94A3B8;"><div style="font-weight:700; color:white; margin-bottom:4px;">{{ORG2_INT1_TITLE}}</div>{{ORG2_INT1_COMPANIES}}</div>
+    <div style="background:#0F172A; padding:12px; font-size:10pt; color:#94A3B8;"><div style="font-weight:700; color:white; margin-bottom:4px;">{{ORG3_INT1_TITLE}}</div>{{ORG3_INT1_COMPANIES}}</div>
+    <div style="background:#1E293B; padding:12px 16px; font-weight:700; color:{{INTEREST_2_COLOR}};">{{INTEREST_2_KOREAN}}</div>
+    <div style="background:#0F172A; padding:12px; font-size:10pt; color:#94A3B8;"><div style="font-weight:700; color:white; margin-bottom:4px;">{{ORG1_INT2_TITLE}}</div>{{ORG1_INT2_COMPANIES}}</div>
+    <div style="background:#0F172A; padding:12px; font-size:10pt; color:#94A3B8;"><div style="font-weight:700; color:white; margin-bottom:4px;">{{ORG2_INT2_TITLE}}</div>{{ORG2_INT2_COMPANIES}}</div>
+    <div style="background:#0F172A; padding:12px; font-size:10pt; color:#94A3B8;"><div style="font-weight:700; color:white; margin-bottom:4px;">{{ORG3_INT2_TITLE}}</div>{{ORG3_INT2_COMPANIES}}</div>
+  </div>
+
+  <div class="rounded" style="background:#1E293B; border:1.5px solid #334155; padding:16px 20px;">
+    <div style="font-size:13pt; font-weight:700; color:white; margin-bottom:8px;">💡 조직 선택 체크리스트</div>
+    <div style="font-size:11pt; line-height:2; color:#CBD5E1;">
+      <div class="check-item"><div class="check-box" style="border-color:#475569;"></div>{{ANCHOR_CHECK_1}} <span class="tag" style="font-size:8pt; background:#422006; color:#FBBF24;">{{ANCHOR_1_KOREAN}}</span></div>
+      <div class="check-item"><div class="check-box" style="border-color:#475569;"></div>{{ANCHOR_CHECK_2}} <span class="tag" style="font-size:8pt; background:#172554; color:#60A5FA;">{{ANCHOR_2_KOREAN}}</span></div>
+      <div class="check-item"><div class="check-box" style="border-color:#475569;"></div>나의 Core Fit 직무({{CORE_JOB_1}}, {{CORE_JOB_2}}, {{CORE_JOB_3}})가 존재하는가? <span class="tag" style="font-size:8pt; background:#052e16; color:#4ADE80;">직무</span></div>
+      <div class="check-item"><div class="check-box" style="border-color:#475569;"></div>지금 에너지 상태({{ENERGY_LABEL}})에서 도전할 수 있는 환경인가? <span class="tag" style="font-size:8pt; background:#2E1065; color:#A78BFA;">에너지</span></div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════ -->
+<!-- C 간지 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="background:linear-gradient(160deg, #1E40AF 0%, #3B82F6 50%, #93C5FD 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; color:white;">
+  <div style="font-size:72pt; font-weight:900; opacity:.15; position:absolute; top:30%; letter-spacing:8px;">CAPACITY</div>
+  <div style="width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+    <div style="font-size:36pt; font-weight:900;">C</div>
+  </div>
+  <div class="t-hero" style="color:white;">Capacity</div>
+  <div style="width:50px; height:4px; background:rgba(255,255,255,.4); border-radius:2px; margin:16px 0;"></div>
+  <div style="font-size:14pt; font-weight:400; opacity:.8;">나는 지금 무엇을 잘하고, 무엇을 키워야 하는가</div>
+  <div style="font-size:11pt; font-weight:300; opacity:.5; margin-top:8px;">32개 역량 · 나다움 분석 · S/A/평균 벤치마크</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- Core Fit #1 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-su" style="font-weight:700;">Part 3</span><span>나에게 맞는 일 — Core Fit #1</span></div>
+  <div class="flex justify-between items-center mb-sm">
+    <div>
+      <div class="t-small" style="color:var(--co); font-weight:700;">Core Fit #1</div>
+      <div class="t-h1" style="margin:0;">{{CORE_FIT_1_JOB}}</div>
+    </div>
+    <div class="gauge" style="width:80px; height:80px; font-size:24pt; background:var(--good);">{{CORE_FIT_1_SCORE}}</div>
+  </div>
+  <div class="t-small mb-md">{{CORE_FIT_1_CATEGORY}} 카테고리 &nbsp;|&nbsp; 나다움 적합도 {{CORE_FIT_1_NADAUM}}% &nbsp;|&nbsp; {{CORE_FIT_1_QUADRANT}}</div>
+
+  <div class="t-h4 mb-sm">핵심역량 8개 분석</div>
+  <div class="card" style="padding:18px 22px;">
+    <div class="bar"><div class="bar-top"><span class="bar-name">{{COMP_1_NAME}} <span class="tag tag-co" style="font-size:8pt;">🟢 나다움</span></span><span class="bar-score">{{COMP_1_SCORE}}</span></div><div class="bar-track"><div class="bar-fill" style="width:{{COMP_1_SCORE}}%; background:var(--good);"></div></div></div>
+    <div class="bar"><div class="bar-top"><span class="bar-name">{{COMP_2_NAME}} <span class="tag tag-muted" style="font-size:8pt;">기초</span></span><span class="bar-score">{{COMP_2_SCORE}}</span></div><div class="bar-track"><div class="bar-fill" style="width:{{COMP_2_SCORE}}%; background:var(--good);"></div></div></div>
+    <div class="bar"><div class="bar-top"><span class="bar-name">{{COMP_3_NAME}} <span class="tag tag-bad" style="font-size:8pt;">🔴 非나다움</span></span><span class="bar-score">{{COMP_3_SCORE}}</span></div><div class="bar-track"><div class="bar-fill" style="width:{{COMP_3_SCORE}}%; background:#FDE68A;"></div></div></div>
+    <div class="t-small mt-sm" style="color:var(--muted);">┃ A급(70) &nbsp;&nbsp; ┃ S급(85) 기준선 &nbsp;&nbsp;· 8개 역량 동적 생성</div>
+  </div>
+
+  <div class="mt-md rounded-lg p-md" style="background:#F0FDF4; border:1.5px solid #BBF7D0;">
+    <div class="t-h4 fc-co mb-xs">💡 이 직무에서 당신의 포지션</div>
+    <div class="t-body">{{CORE_FIT_1_POSITION_DESC}}</div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span>11</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 직무 지도 (2×2) -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-su" style="font-weight:700;">Part 3</span><span>나에게 맞는 일 — 직무 지도</span></div>
+
+  <div class="t-h2 mb-xs">{{USER_NAME}}님의 직무 지도</div>
+  <div class="t-small mb-md">나다움 적합도(자연스러운가) × 역량 적합도(잘하는가)</div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px; border-radius:16px; overflow:hidden; margin-bottom:20px;">
+    <div class="p-lg" style="background:#F0FDF4;">
+      <div style="font-size:14pt; font-weight:900; color:#15803D; margin-bottom:4px;">🟢 Sweet Spot</div>
+      <div class="t-small mb-sm" style="color:#166534;">자연스럽고 잘하는 직무</div>
+      <div><span class="tag tag-co">{{SWEET_JOB_1}} {{SWEET_JOB_1_SCORE}}%</span></div>
+      <div><span class="tag tag-co">{{SWEET_JOB_2}} {{SWEET_JOB_2_SCORE}}%</span></div>
+      <div><span class="tag tag-co">{{SWEET_JOB_3}} {{SWEET_JOB_3_SCORE}}%</span></div>
+      <div class="mt-sm t-small" style="color:#166534;">→ 지금 바로 도전할 수 있는 직무</div>
+    </div>
+    <div class="p-lg" style="background:#FFFBEB;">
+      <div style="font-size:14pt; font-weight:900; color:#854D0E; margin-bottom:4px;">🟡 후천적 강점</div>
+      <div class="t-small mb-sm" style="color:#92400E;">잘하지만 에너지 소모 큰 직무</div>
+      <div><span class="tag tag-warn">{{ACQUIRED_JOB_1}} {{ACQUIRED_JOB_1_SCORE}}%</span></div>
+      <div><span class="tag tag-warn">{{ACQUIRED_JOB_2}} {{ACQUIRED_JOB_2_SCORE}}%</span></div>
+      <div class="mt-sm t-small" style="color:#92400E;">⚠ 잘할 수 있지만 장기적으로<br>소진 위험이 있습니다</div>
+    </div>
+    <div class="p-lg" style="background:#EFF6FF;">
+      <div style="font-size:14pt; font-weight:900; color:#1E40AF; margin-bottom:4px;">🔵 잠재력</div>
+      <div class="t-small mb-sm" style="color:#1D4ED8;">나답지만 아직 개발 필요한 직무</div>
+      <div><span class="tag tag-su">{{POTENTIAL_JOB_1}} {{POTENTIAL_JOB_1_SCORE}}%</span></div>
+      <div><span class="tag tag-su">{{POTENTIAL_JOB_2}} {{POTENTIAL_JOB_2_SCORE}}%</span></div>
+      <div class="mt-sm t-small" style="color:#1D4ED8;">→ 나다움 역량이라 개발하면<br>&nbsp;&nbsp;&nbsp;빠르게 성장 (Expandable)</div>
+    </div>
+    <div class="p-lg" style="background:#F8FAFC;">
+      <div style="font-size:14pt; font-weight:900; color:#94A3B8; margin-bottom:4px;">🔴 비추천</div>
+      <div class="t-small mb-sm" style="color:#94A3B8;">맞지 않는 직무</div>
+      <div><span class="tag tag-muted">{{NOT_FIT_JOB_1}} {{NOT_FIT_JOB_1_SCORE}}%</span></div>
+      <div><span class="tag tag-muted">{{NOT_FIT_JOB_2}} {{NOT_FIT_JOB_2_SCORE}}%</span></div>
+      <div class="mt-sm t-small" style="color:#94A3B8;">→ 나다움도 역량도 맞지 않아<br>&nbsp;&nbsp;&nbsp;피하는 것이 현명합니다</div>
+    </div>
+  </div>
+
+  <div class="card" style="background:#FFFBEB; border:1.5px solid #FDE68A;">
+    <div class="t-h4 mb-xs" style="color:#92400E;">💬 이 지도를 읽는 법</div>
+    <div class="t-body">
+      <strong style="color:#15803D;">🟢 Sweet Spot</strong>은 성향·가치관·역량이 모두 맞는 직무입니다. 여기서 시작하세요.<br>
+      <strong style="color:#1E40AF;">🔵 잠재력</strong>은 나다움 역량이라 투자하면 빠르게 올라갑니다. Expandable로 추천합니다.<br>
+      <strong style="color:#854D0E;">🟡 후천적 강점</strong>은 잘하지만 에너지가 많이 들어요. "왜 이 일이 힘들지?" 의 답이 여기 있습니다.<br>
+      <strong style="color:#94A3B8;">🔴 비추천</strong>은 나다움에서도 역량에서도 거리가 있습니다.
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>14</span></div>
+</div>
+
+<!-- 조직 매칭 섹션은 Anchor 뒤로 이동됨 -->
+
+<!-- Part 4 pages moved to Anchor section -->
+
+<!-- ═══════════════════════════════════════ -->
+<!-- Part 5는 C 섹션 안에 포함 (별도 간지 없이 이어짐) -->
+
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-su" style="font-weight:700;">C</span><span>나의 역량 — 나다움 분석</span></div>
+  <div class="t-h2 mb-xs">나의 역량</div>
+  <div class="t-body mb-md" style="font-size:11pt;">30개 전문역량을 <strong>{{FOCUS_PRIMARY_KOREAN}}</strong> 유형 기준으로 분류했습니다. 나다운 역량은 에너지가 덜 들고, 非나다운 역량은 에너지가 더 듭니다.</div>
+
+  <div class="grid-2 gap-sm mb-sm">
+    <div class="card" style="border-left:4px solid var(--co); background:#F0FDF4; padding:14px 16px;">
+      <div style="font-size:12pt; font-weight:800; color:#15803D; margin-bottom:4px;">🟢 나다운 역량</div>
+      <div class="t-small mb-sm" style="color:#166534;">{{FOCUS_PRIMARY_KOREAN}} 주기능 · N개</div>
+      <div class="bar"><div class="bar-top"><span class="bar-name" style="font-size:10pt;">{{NADAUM_COMP_1}}</span><span class="bar-score" style="font-size:10pt;">{{SCORE}}</span></div><div class="bar-track" style="height:7px;"><div class="bar-fill" style="width:{{SCORE}}%; background:var(--co);"></div></div></div>
+      <div class="bar"><div class="bar-top"><span class="bar-name" style="font-size:10pt;">{{NADAUM_COMP_2}}</span><span class="bar-score" style="font-size:10pt;">{{SCORE}}</span></div><div class="bar-track" style="height:7px;"><div class="bar-fill" style="width:{{SCORE}}%; background:var(--co);"></div></div></div>
+      <div class="t-small" style="color:#166534;">· 유형별 나다움 역량 전체 표시</div>
+    </div>
+    <div class="card" style="border-left:4px solid #EAB308; background:#FFFBEB; padding:14px 16px;">
+      <div style="font-size:12pt; font-weight:800; color:#854D0E; margin-bottom:4px;">🟡 확장 나다움</div>
+      <div class="t-small mb-sm" style="color:#92400E;">{{FOCUS_SECONDARY_KOREAN}} 부기능 · N개</div>
+      <div class="bar"><div class="bar-top"><span class="bar-name" style="font-size:10pt;">{{HALF_COMP_1}}</span><span class="bar-score" style="font-size:10pt;">{{SCORE}}</span></div><div class="bar-track" style="height:7px;"><div class="bar-fill" style="width:{{SCORE}}%; background:#EAB308;"></div></div></div>
+      <div class="bar"><div class="bar-top"><span class="bar-name" style="font-size:10pt;">{{HALF_COMP_2}}</span><span class="bar-score" style="font-size:10pt;">{{SCORE}}</span></div><div class="bar-track" style="height:7px;"><div class="bar-fill" style="width:{{SCORE}}%; background:#EAB308;"></div></div></div>
+    </div>
+  </div>
+  <div class="grid-2 gap-sm mb-sm">
+    <div class="card" style="border-left:4px solid var(--bad); background:#FEF2F2; padding:14px 16px;">
+      <div style="font-size:12pt; font-weight:800; color:#991B1B; margin-bottom:4px;">🔴 非나다운 하위</div>
+      <div class="t-small mb-sm" style="color:#991B1B;">에너지 소모가 큰 역량</div>
+      <div class="bar"><div class="bar-top"><span class="bar-name" style="font-size:10pt;">{{NON_COMP_1}}</span><span class="bar-score" style="font-size:10pt;">{{SCORE}}</span></div><div class="bar-track" style="height:7px;"><div class="bar-fill" style="width:{{SCORE}}%; background:var(--bad);"></div></div></div>
+    </div>
+    <div class="card" style="border-left:4px solid #94A3B8; padding:14px 16px;">
+      <div style="font-size:12pt; font-weight:800; color:#475569; margin-bottom:4px;">📋 기초역량</div>
+      <div class="t-small mb-sm" style="color:#64748B;">모든 직무의 기본기</div>
+      <div class="bar"><div class="bar-top"><span class="bar-name" style="font-size:10pt;">{{FD_COMP_1}}</span><span class="bar-score" style="font-size:10pt;">{{SCORE}}</span></div><div class="bar-track" style="height:7px;"><div class="bar-fill" style="width:{{SCORE}}%;"></div></div></div>
+    </div>
+  </div>
+  <div class="card" style="background:#F8FAFC; padding:12px 16px;">
+    <div class="t-body" style="font-size:10.5pt; line-height:1.7;">
+      <strong style="color:var(--co);">🟢 나다운 역량</strong>은 {{FOCUS_PRIMARY_KOREAN}}이 자연스럽게 집중하는 역량입니다.<br>
+      <strong style="color:#EAB308;">🟡 확장 나다움</strong>은 {{FOCUS_SECONDARY_KOREAN}}(부기능)에서 오는 익숙한 역량입니다.<br>
+      <strong style="color:var(--bad);">🔴 非나다운 역량</strong>은 잘할 수 있지만 에너지가 더 들어, 장기적으로 소진 위험이 있습니다.
+    </div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-su" style="font-weight:700;">C</span><span>강점 TOP5 + 성장 포인트</span></div>
+  <div class="t-h2 mb-xs">강점 TOP 5</div>
+  <div class="card mb-sm" style="border-left:5px solid var(--co); background:#F0FDF4;">
+    <div class="flex justify-between items-center mb-xs">
+      <div><span style="font-size:14pt; font-weight:900; color:var(--co);">1</span> &nbsp;<span class="t-h4">{{STRENGTH_1_NAME}}</span> <span class="tag tag-co" style="font-size:8pt;">🟢 나다움</span></div>
+      <div style="font-size:20pt; font-weight:900; color:var(--co);">{{STRENGTH_1_SCORE}}</div>
+    </div>
+  </div>
+  <div class="card mb-sm" style="border-left:5px solid var(--co);">
+    <div class="flex justify-between items-center mb-xs">
+      <div><span style="font-size:14pt; font-weight:900;">2</span> &nbsp;<span class="t-h4">{{STRENGTH_2_NAME}}</span> <span class="tag tag-warn" style="font-size:8pt;">🟡 확장</span></div>
+      <div style="font-size:20pt; font-weight:900;">{{STRENGTH_2_SCORE}}</div>
+    </div>
+  </div>
+  <div class="t-small mb-md" style="color:var(--muted);">· 5개 역량 동적 생성</div>
+
+  <div class="t-h2 mb-xs mt-md">성장 포인트 (Core Fit #1 기준 60점 미만)</div>
+  <div class="card mb-sm" style="border-left:5px solid #EAB308; background:#FFFBEB;">
+    <div class="flex justify-between items-center mb-xs">
+      <div><span class="t-h4">{{GROWTH_1_NAME}}</span> <span class="tag tag-bad" style="font-size:8pt;">🔴 非나다움</span></div>
+      <div><span style="font-size:18pt; font-weight:900; color:#854D0E;">{{GROWTH_1_SCORE}}</span> <span class="t-small">→ 목표 60</span></div>
+    </div>
+    <div class="t-small" style="color:#92400E;">{{GROWTH_1_TIP}}</div>
+  </div>
+  <div class="card mb-sm" style="border-left:5px solid #EAB308; background:#FFFBEB;">
+    <div class="flex justify-between items-center mb-xs">
+      <div><span class="t-h4">{{GROWTH_2_NAME}}</span> <span class="tag tag-co" style="font-size:8pt;">🟢 나다움</span></div>
+      <div><span style="font-size:18pt; font-weight:900; color:#854D0E;">{{GROWTH_2_SCORE}}</span> <span class="t-small">→ 목표 70</span></div>
+    </div>
+    <div class="t-small" style="color:#92400E;">{{GROWTH_2_TIP}}</div>
+  </div>
+  <div class="t-small mb-md" style="color:var(--muted);">· 최대 4개 역량 동적 생성</div>
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<div class="page bg-dark" style="padding-top:22mm;">
+  <div class="pg-head"><span style="color:var(--co); font-weight:700;">F</span><span style="color:#94A3B8;">×</span><span style="color:var(--cr); font-weight:700;">A</span><span style="color:#94A3B8;">×</span><span style="color:var(--su); font-weight:700;">C</span><span style="color:#94A3B8;">&nbsp;&nbsp;종합 커리어 추천</span></div>
+  <div style="display:flex; gap:8px; align-items:center; margin-bottom:16px;">
+    <div style="width:44px; height:44px; border-radius:50%; background:var(--co); display:flex; align-items:center; justify-content:center; font-size:18pt; font-weight:900; color:white;">F</div>
+    <div style="font-size:16pt; color:#94A3B8;">×</div>
+    <div style="width:44px; height:44px; border-radius:50%; background:var(--cr); display:flex; align-items:center; justify-content:center; font-size:18pt; font-weight:900; color:white;">A</div>
+    <div style="font-size:16pt; color:#94A3B8;">×</div>
+    <div style="width:44px; height:44px; border-radius:50%; background:var(--su); display:flex; align-items:center; justify-content:center; font-size:18pt; font-weight:900; color:white;">C</div>
+  </div>
+  <div style="font-size:22pt; font-weight:900; color:white; line-height:1.3; margin-bottom:20px;">
+    {{FOCUS_PRIMARY_KOREAN}}의 방향,<br>{{ANCHOR_1_KOREAN}}의 가치,<br>{{CORE_JOB_1}}의 역량이<br>만나는 곳
+  </div>
+  <div style="height:1px; background:#1E293B; margin:14px 0;"></div>
+  <div class="rounded p-lg mb-sm" style="background:#1E293B;">
+    <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
+      <span style="font-size:12pt; font-weight:900; color:var(--co);">F</span>
+      <span style="font-size:12pt; color:#CBD5E1;">{{FOCUS_PRIMARY_KOREAN}} — {{FOCUS_PRIMARY_DESC}}</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
+      <span style="font-size:12pt; font-weight:900; color:var(--cr);">A</span>
+      <span style="font-size:12pt; color:#CBD5E1;">{{ANCHOR_1_KOREAN}} × {{ANCHOR_2_KOREAN}} → {{TOP_ORG_KOREAN}}</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <span style="font-size:12pt; font-weight:900; color:var(--su);">C</span>
+      <span style="font-size:12pt; color:#CBD5E1;">Core Fit: {{CORE_JOB_1}}, {{CORE_JOB_2}}, {{CORE_JOB_3}}</span>
+    </div>
+  </div>
+  <div class="grid-3" style="gap:8px;">
+    <div class="rounded p-md" style="background:#1E293B; border-top:3px solid var(--co); text-align:center;">
+      <div style="font-size:24pt; font-weight:900; color:white; margin-bottom:4px;">{{CORE_JOB_1_SCORE}}</div>
+      <div style="font-size:11pt; font-weight:700; color:white;">{{CORE_JOB_1}}</div>
+      <div style="font-size:9pt; color:#64748B; margin-top:2px;">{{CORE_JOB_1_CAT}}</div>
+    </div>
+    <div class="rounded p-md" style="background:#1E293B; border-top:3px solid var(--cr); text-align:center;">
+      <div style="font-size:24pt; font-weight:900; color:white; margin-bottom:4px;">{{CORE_JOB_2_SCORE}}</div>
+      <div style="font-size:11pt; font-weight:700; color:white;">{{CORE_JOB_2}}</div>
+      <div style="font-size:9pt; color:#64748B;">{{CORE_JOB_2_CAT}}</div>
+    </div>
+    <div class="rounded p-md" style="background:#1E293B; border-top:3px solid var(--su); text-align:center;">
+      <div style="font-size:24pt; font-weight:900; color:white; margin-bottom:4px;">{{CORE_JOB_3_SCORE}}</div>
+      <div style="font-size:11pt; font-weight:700; color:white;">{{CORE_JOB_3}}</div>
+      <div style="font-size:9pt; color:#64748B;">{{CORE_JOB_3_CAT}}</div>
+    </div>
+  </div>
+  <div class="rounded p-lg mt-md" style="background:#1E293B;">
+    <div style="font-size:12pt; font-weight:700; color:white; margin-bottom:10px;">🏢 추천 기업</div>
+    <div style="font-size:10pt; font-weight:700; color:var(--co); margin-bottom:4px;">{{TOP_ORG_KOREAN}} × {{INTEREST_1_KOREAN}}</div>
+    <div style="font-size:10pt; color:#94A3B8; line-height:1.6;">{{RECOMMENDED_COMPANIES_1}}</div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════ -->
+<!-- E 간지 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" style="background:linear-gradient(160deg, #5B21B6 0%, #8B5CF6 50%, #C4B5FD 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; color:white;">
+  <div style="font-size:72pt; font-weight:900; opacity:.15; position:absolute; top:30%; letter-spacing:8px;">ENERGY</div>
+  <div style="width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+    <div style="font-size:36pt; font-weight:900;">E</div>
+  </div>
+  <div class="t-hero" style="color:white;">Energy</div>
+  <div style="width:50px; height:4px; background:rgba(255,255,255,.4); border-radius:2px; margin:16px 0;"></div>
+  <div style="font-size:14pt; font-weight:400; opacity:.8;">지금 움직일 준비가 되었는가</div>
+  <div style="font-size:11pt; font-weight:300; opacity:.5; margin-top:8px;">마음 준비도 · 성장단계 · 30일 액션 플랜</div>
+</div>
+
+<!-- 에너지 페이지 1 -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-ar" style="font-weight:700;">E</span><span>지금 나의 에너지</span></div>
+  <div class="t-h2 mb-xs">지금 나의 에너지</div>
+  <div class="t-body mb-md">아무리 좋은 방향을 찾아도, 지금 에너지가 없으면 움직일 수 없습니다. 3가지 지표로 당신의 마음 상태를 읽습니다.</div>
+
+  <div class="card mb-sm" style="border-left:5px solid {{MOTIV_COLOR}}; padding:16px 20px;">
+    <div class="flex justify-between items-center mb-xs">
+      <div class="t-h4" style="color:{{MOTIV_COLOR}};">동기충족도</div>
+      <div style="font-size:24pt; font-weight:900; color:{{MOTIV_COLOR}};">{{MOTIV_PCT}}%</div>
+    </div>
+    <div class="bar-track mb-sm" style="height:10px;"><div class="bar-fill" style="width:{{MOTIV_PCT}}%; background:{{MOTIV_COLOR}}; border-radius:5px;"></div></div>
+    <div class="t-body" style="font-size:11pt; margin-bottom:6px;"><strong>정의:</strong> 일에서 자율성, 유능감, 관계성 — 3가지 기본 욕구가 얼마나 채워지고 있는지를 측정합니다.</div>
+    <div class="rounded p-md" style="background:{{MOTIV_BG}};"><div style="font-size:11pt; color:{{MOTIV_COLOR}};"><strong>{{MOTIV_PCT}}% = {{MOTIV_LEVEL}}.</strong> {{MOTIV_DESC}}</div></div>
+  </div>
+
+  <div class="card mb-sm" style="border-left:5px solid {{ACTION_COLOR}}; padding:16px 20px;">
+    <div class="flex justify-between items-center mb-xs">
+      <div class="t-h4" style="color:{{ACTION_COLOR}};">행동전환도</div>
+      <div style="font-size:24pt; font-weight:900; color:{{ACTION_COLOR}};">{{ACTION_PCT}}%</div>
+    </div>
+    <div class="bar-track mb-sm" style="height:10px;"><div class="bar-fill" style="width:{{ACTION_PCT}}%; background:{{ACTION_COLOR}}; border-radius:5px;"></div></div>
+    <div class="t-body" style="font-size:11pt; margin-bottom:6px;"><strong>정의:</strong> 커리어 목표를 위해 실제로 행동하고 있는 정도.</div>
+    <div class="rounded p-md"><div style="font-size:11pt; color:{{ACTION_COLOR}};"><strong>{{ACTION_PCT}}% = {{ACTION_LEVEL}}.</strong> {{ACTION_DESC}}</div></div>
+  </div>
+
+  <div class="card" style="border-left:5px solid {{ENG_COLOR}}; padding:16px 20px;">
+    <div class="flex justify-between items-center mb-xs">
+      <div class="t-h4" style="color:{{ENG_COLOR}};">몰입도</div>
+      <div style="font-size:24pt; font-weight:900; color:{{ENG_COLOR}};">{{ENG_PCT}}%</div>
+    </div>
+    <div class="bar-track mb-sm" style="height:10px;"><div class="bar-fill" style="width:{{ENG_PCT}}%; background:{{ENG_COLOR}}; border-radius:5px;"></div></div>
+    <div class="t-body" style="font-size:11pt; margin-bottom:6px;"><strong>정의:</strong> 일할 때 에너지가 넘치고 시간 가는 줄 모르는 상태. 번아웃 조기 신호를 감지합니다.</div>
+    <div class="rounded p-md"><div style="font-size:11pt; color:{{ENG_COLOR}};"><strong>{{ENG_PCT}}%.</strong> {{ENG_DESC}}</div></div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<!-- 에너지 페이지 2 -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-ar" style="font-weight:700;">E</span><span>지금 나의 에너지 — 종합</span></div>
+  <div class="text-center mb-md">
+    <div style="display:inline-block; background:{{ENERGY_BADGE_BG}}; padding:8px 24px; border-radius:10px; font-weight:800; color:{{ENERGY_BADGE_FG}}; font-size:13pt;">{{ENERGY_EMOJI}} {{ENERGY_LABEL}}</div>
+    <div class="mt-sm" style="font-size:24pt; font-weight:900; color:var(--text);">{{ENERGY_STAGE}}</div>
+  </div>
+  <div class="t-body mb-md text-center" style="font-size:12pt; line-height:2;">
+    동기충족도({{MOTIV_PCT}}%)는 {{MOTIV_LEVEL}}, 행동전환도({{ACTION_PCT}}%)는 {{ACTION_LEVEL}}입니다.<br>
+    {{STAGE_SUMMARY}}
+  </div>
+  <div class="card mb-md" style="padding:18px;">
+    <div class="t-h4 text-center mb-sm">성장단계 매트릭스 — 동기 × 행동</div>
+    <table style="width:100%; border-collapse:separate; border-spacing:3px; font-size:11pt; text-align:center;">
+      <tr><td style="width:22%;"></td><td style="padding:8px; font-weight:700;">행동 높음</td><td style="padding:8px; font-weight:700;">행동 보통</td><td style="padding:8px; font-weight:700;">행동 낮음</td></tr>
+      <tr><td style="font-weight:700; text-align:left;">충족</td><td style="padding:10px; background:#DCFCE7; border-radius:8px;">성장활성기</td><td style="padding:10px; background:#F0FDF4; border-radius:8px;">균형조율기</td><td style="padding:10px; background:#FFFBEB; border-radius:8px;">잠재축적기</td></tr>
+      <tr><td style="font-weight:700; text-align:left;">부분충족</td><td style="padding:10px; background:#FEF3C7; border-radius:8px;">전환가속기</td><td style="padding:10px; background:#FEF9C3; border-radius:8px; border:3px solid #F59E0B; font-weight:800; color:#92400E;">● {{ENERGY_STAGE}}</td><td style="padding:10px; background:#FEE2E2; border-radius:8px;">방향설정기</td></tr>
+      <tr><td style="font-weight:700; text-align:left;">미충족</td><td style="padding:10px; background:#FFFBEB; border-radius:8px;">돌파시도기</td><td style="padding:10px; background:#FEE2E2; border-radius:8px;">에너지충전기</td><td style="padding:10px; background:#FEE2E2; border-radius:8px;">기반구축기</td></tr>
+    </table>
+    <div class="t-small text-center mt-sm" style="color:var(--muted);">가로축 = 실제로 행동하고 있는가 | 세로축 = 동기가 충족되고 있는가</div>
+  </div>
+  <div class="card" style="background:{{ENERGY_BADGE_BG}}; padding:18px 22px;">
+    <div class="t-h4 mb-sm">🎯 {{ENERGY_STAGE}}인 당신에게</div>
+    <div class="t-body" style="font-size:12pt; line-height:2;">{{STAGE_ADVICE}}</div>
+  </div>
+  <div class="pg-foot"><span>FACE Career Report</span><span></span></div>
+</div>
+
+<!-- 30일 액션 플랜은 E 섹션 안에 포함 -->
+
+<!-- Part 7-1: Week 1-2 -->
+<div class="page" style="padding-top:22mm;">
+  <div class="pg-head"><span class="fc-co" style="font-weight:700;">Part 7</span><span>30일 액션 플랜</span></div>
+  <div class="t-h2 mb-xs">{{USER_NAME}}님의 30일 플랜</div>
+  <div class="t-body mb-md">{{ENERGY_EMOJI}} {{ENERGY_LABEL}} × {{FOCUS_PRIMARY_KOREAN}} 맞춤. 급하게 움직이기보다 <strong>방향을 확인하며 한 걸음씩</strong> 나아가는 플랜입니다.</div>
+
+  <div class="card mb-md" style="border-left:5px solid var(--co);">
+    <div style="font-size:14pt; font-weight:800; color:var(--co); margin-bottom:10px;">📅 Week 1 — 방향 확인</div>
+    <div class="check-item"><div class="check-box"></div>이 리포트를 천천히 다시 읽고, 가장 와닿는 부분 3개에 밑줄 치기</div>
+    <div class="check-item"><div class="check-box"></div>Core Fit 직무({{CORE_JOB_1}}, {{CORE_JOB_2}}, {{CORE_JOB_3}}) 중 가장 끌리는 것 1개 정하기</div>
+    <div class="check-item"><div class="check-box"></div>가까운 사람 1명과 "나는 어떤 일이 맞을까?" 대화 나누기</div>
+    <div class="check-item"><div class="check-box"></div>관심 직무의 채용 공고(JD) 3개 읽어보기</div>
+  </div>
+
+  <div class="card mb-md" style="border-left:5px solid #86EFAC;">
+    <div style="font-size:14pt; font-weight:800; color:#15803D; margin-bottom:10px;">📅 Week 2 — 탐색 시작</div>
+    <div class="check-item"><div class="check-box"></div>관심 직무 현직자 인터뷰 영상 3개 시청하기</div>
+    <div class="check-item"><div class="check-box"></div>관련 커뮤니티(오픈채팅, 링크드인 그룹) 1곳 가입하기</div>
+    <div class="check-item"><div class="check-box"></div>나의 강점 역량(네트워킹, 공감력)을 활용한 경험 3개 적어보기</div>
+    <div class="check-item"><div class="check-box"></div>추천 조직유형(스타트업) 중 관심 기업 5곳 리스트업</div>
+  </div>
+
+  <div class="card mb-md" style="border-left:5px solid #A7F3D0;">
+    <div style="font-size:14pt; font-weight:800; color:#059669; margin-bottom:10px;">📅 Week 3 — 경험 만들기</div>
+    <div class="check-item"><div class="check-box"></div>관심 기업 1곳 깊이 조사하기 (비전, 문화, 채용 공고)</div>
+    <div class="check-item"><div class="check-box"></div>현직자 커피챗 1회 시도하기 (LinkedIn DM or 지인 소개)</div>
+    <div class="check-item"><div class="check-box"></div>성장 포인트 역량(목표지향성) 관련 무료 강의 1개 체험</div>
+    <div class="check-item"><div class="check-box"></div>나의 FACE 결과를 1페이지로 정리해보기 (자기소개서 소재)</div>
+  </div>
+
+  <div class="card" style="border-left:5px solid #D1FAE5;">
+    <div style="font-size:14pt; font-weight:800; color:#047857; margin-bottom:10px;">📅 Week 4 — 정리와 다음</div>
+    <div class="check-item"><div class="check-box"></div>한 달간 느낀 것 정리하기 (뭐가 끌렸고, 뭐가 안 맞았는지)</div>
+    <div class="check-item"><div class="check-box"></div>관심 방향 좁히기 (3개 → 1~2개)</div>
+    <div class="check-item"><div class="check-box"></div>다음 달 작은 목표 1개 설정하기</div>
+    <div class="check-item"><div class="check-box"></div>커피챗에서 만난 사람에게 감사 메시지 보내기</div>
+  </div>
+
+  <div class="mt-md text-center card" style="background:#F0FDF4; padding:16px;">
+    <div class="t-body" style="color:#166534;">30일 후 재진단하면 성장을 확인할 수 있습니다.<br>Expandable 직무가 Core로 올라오는 순간을 만나보세요.</div>
+  </div>
+
+  <div class="pg-foot"><span>FACE Career Report</span><span>26</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 마무리 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page bg-dark" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:40mm 30mm;">
+  <div style="font-size:13pt; color:#94A3B8; line-height:2.2; margin-bottom:24mm; max-width:82%;">
+    FACE Career Report는<br>
+    아무도 말해주지 않은<br>
+    <strong style="color:white;">나다움에 대한 생각을 시작하는 도구</strong>입니다.
+  </div>
+  <div style="font-size:12pt; color:#64748B; line-height:2.4; max-width:78%; margin-bottom:24mm;">
+    인생에는 정답이 없습니다.<br>
+    나만의 답을 찾아가는 여정입니다.<br>
+    첫 단서를 갖고, 나만의 여행을 시작하시길 바랍니다.
+  </div>
+  <div style="font-size:11pt; color:#475569; line-height:2.2; max-width:78%; margin-bottom:24mm;">
+    방향을 모르겠고, 막막할 땐 DA-SH를 찾아주세요.<br>
+    정답을 찾을 수 있도록 DA-SH가 단서를 연결해 드리겠습니다.
+  </div>
+  <div>
+    <div style="font-size:12pt; color:#94A3B8; margin-bottom:8px;">나다운 커리어를 마주하는 시간</div>
+    <div style="font-size:24pt; font-weight:900; color:var(--co); letter-spacing:4px;">DA-SH</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // 플레이스홀더 주석 → 시각적 박스로 변환
+  const placeholderMap = {
+    // LIGHT_SHADOW, ORG_MATCHING, FA_BRIDGE, CROSS_ORG, CORE_FIT_1, COMPETENCY_ANALYSIS,
+    // STRENGTH_GROWTH, FAC_BRIDGE, ENERGY_PAGES → 모두 레이아웃 skeleton으로 교체됨 (아래 map 불필요)
+    'ANCHOR_6CARDS_PLACEHOLDER':   { label: '📊 6가지 가치관 상세 카드 (점수별 동적 생성)', color: '#F59E0B' },
+    'ANCHOR_INTERESTS_PLACEHOLDER':{ label: '🔍 관심 영역 카드 (TOP2 동적 생성)', color: '#F97316' },
+    'ANCHOR_BUBBLE_PLACEHOLDER':   { label: '🔵 가치관 버블 차트 (6개 Anchor 점수 비례 버블)', color: '#F59E0B' },
+    'ANCHOR_COMBO_PLACEHOLDER':    { label: '💬 메인×서브 가치관 콤보 문구 (조합별 동적 생성)', color: '#D97706' },
+    'CAP_BARS_PLACEHOLDER':        { label: '💪 강점 바 차트 (TOP3)', color: '#3B82F6', compact: true },
+    'GROWTH_BARS_PLACEHOLDER':     { label: '📈 성장 포인트 바 차트 (TOP3)', color: '#EF4444', compact: true },
+    'ANCHOR_DETAIL_CARDS_PLACEHOLDER': { label: '⚓ Anchor 메인/서브 카드 (동적 생성)', color: '#F97316' },
+    'JOB_MAP_PLACEHOLDER':         { label: '🗺 직무 지도 2×2 (동적 생성)', color: '#8B5CF6' },
+    // 아래는 모두 skeleton layout으로 교체됨 — placeholder box 불필요
+  };
+
+  // HTML 전체를 문자열로 가져와서 처리
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    if (/\{\{[A-Z_]+\}\}/.test(node.textContent)) {
+      textNodes.push(node);
+    }
+  }
+
+  textNodes.forEach(tn => {
+    const span = document.createElement('span');
+    span.innerHTML = tn.textContent.replace(/\{\{([A-Z_0-9]+)\}\}/g, (_, name) =>
+      `<mark style="background:#FEF9C3; color:#92400E; border:1.5px solid #EAB308; border-radius:4px; padding:1px 6px; font-family:monospace; font-size:0.85em; font-weight:700; white-space:nowrap;">{{${name}}}</mark>`
+    );
+    tn.parentNode.replaceChild(span, tn);
+  });
+
+  // HTML에서 <!-- PLACEHOLDER --> 찾기는 DOM에서 어려우므로 innerHTML 치환 이용
+  document.querySelectorAll('*').forEach(el => {
+    if (el.children.length === 0 && el.innerHTML.trim() === '') return;
+  });
+
+  // 플레이스홀더 주석 → 가시적 블록 (innerHTML 치환)
+  function replaceCommentsInEl(el) {
+    let html = el.innerHTML;
+    let changed = false;
+    Object.entries(placeholderMap).forEach(([key, info]) => {
+      const re = new RegExp(`<!--\\s*${key}\\s*-->`, 'g');
+      if (re.test(html)) {
+        const box = info.compact
+          ? `<div style="border:2px dashed ${info.color}; border-radius:8px; padding:6px 12px; text-align:center; margin:4px 0; background:${info.color}18;">
+              <div style="font-size:9pt; font-weight:800; color:${info.color}; font-family:monospace;">${info.label}</div>
+            </div>`
+          : `<div style="border:3px dashed ${info.color}; border-radius:12px; padding:20px; text-align:center; margin:8px 0; background:${info.color}18;">
+              <div style="font-size:13pt; font-weight:800; color:${info.color}; margin-bottom:6px;">${info.label}</div>
+              <div style="font-size:10pt; color:${info.color}; opacity:0.7; font-family:monospace; font-weight:600;"><!-- ${key} --></div>
+            </div>`;
+        html = html.replace(re, box);
+        changed = true;
+      }
+    });
+    if (changed) el.innerHTML = html;
+  }
+
+  // 최상위 .page 요소들에만 적용 (전체 innerHTML은 너무 위험)
+  document.querySelectorAll('.page').forEach(replaceCommentsInEl);
+
+  // 상단에 범례 배너 추가
+  const legend = document.createElement('div');
+  legend.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:9999; background:#0F172A; color:white; padding:10px 20px; font-size:11pt; display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-family:system-ui;';
+  legend.innerHTML = `
+    <span style="font-weight:800; font-size:13pt; color:#22C55E;">📋 BLANK TEMPLATE</span>
+    <span style="color:#94A3B8; font-size:10pt;">동적 부분 확인 모드</span>
+    <span style="margin-left:auto; display:flex; gap:12px; align-items:center;">
+      <mark style="background:#FEF9C3; color:#92400E; border:1.5px solid #EAB308; border-radius:4px; padding:2px 8px; font-family:monospace; font-weight:700;">{{TOKEN}}</mark>
+      <span style="color:#94A3B8; font-size:9pt;">= 인라인 치환 (단순 문자열 교체)</span>
+      <span style="border:2px dashed #3B82F6; border-radius:4px; padding:2px 8px; font-size:9pt; color:#94A3B8;">점선 블록</span>
+      <span style="color:#94A3B8; font-size:9pt;">= 동적 HTML 삽입 (JS 생성)</span>
+    </span>
+  `;
+  document.body.prepend(legend);
+  document.body.style.paddingTop = '52px';
+})();
+</script>
+<script>
+(function() {
+  // 플레이스홀더 주석 → 시각적 박스로 변환
+  const placeholderMap = {
+    // LIGHT_SHADOW, ORG_MATCHING, FA_BRIDGE, CROSS_ORG, CORE_FIT_1, COMPETENCY_ANALYSIS,
+    // STRENGTH_GROWTH, FAC_BRIDGE, ENERGY_PAGES → 모두 레이아웃 skeleton으로 교체됨 (아래 map 불필요)
+    'ANCHOR_6CARDS_PLACEHOLDER':   { label: '📊 6가지 가치관 상세 카드 (점수별 동적 생성)', color: '#F59E0B' },
+    'ANCHOR_INTERESTS_PLACEHOLDER':{ label: '🔍 관심 영역 카드 (TOP2 동적 생성)', color: '#F97316' },
+    'ANCHOR_BUBBLE_PLACEHOLDER':   { label: '🔵 가치관 버블 차트 (6개 Anchor 점수 비례 버블)', color: '#F59E0B' },
+    'ANCHOR_COMBO_PLACEHOLDER':    { label: '💬 메인×서브 가치관 콤보 문구 (조합별 동적 생성)', color: '#D97706' },
+    'CAP_BARS_PLACEHOLDER':        { label: '💪 강점 바 차트 (TOP3)', color: '#3B82F6', compact: true },
+    'GROWTH_BARS_PLACEHOLDER':     { label: '📈 성장 포인트 바 차트 (TOP3)', color: '#EF4444', compact: true },
+    'ANCHOR_DETAIL_CARDS_PLACEHOLDER': { label: '⚓ Anchor 메인/서브 카드 (동적 생성)', color: '#F97316' },
+    'JOB_MAP_PLACEHOLDER':         { label: '🗺 직무 지도 2×2 (동적 생성)', color: '#8B5CF6' },
+    // 아래는 모두 skeleton layout으로 교체됨 — placeholder box 불필요
+  };
+
+  // HTML 전체를 문자열로 가져와서 처리
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    if (/\{\{[A-Z_]+\}\}/.test(node.textContent)) {
+      textNodes.push(node);
+    }
+  }
+
+  textNodes.forEach(tn => {
+    const span = document.createElement('span');
+    span.innerHTML = tn.textContent.replace(/\{\{([A-Z_0-9]+)\}\}/g, (_, name) =>
+      `<mark style="background:#FEF9C3; color:#92400E; border:1.5px solid #EAB308; border-radius:4px; padding:1px 6px; font-family:monospace; font-size:0.85em; font-weight:700; white-space:nowrap;">{{${name}}}</mark>`
+    );
+    tn.parentNode.replaceChild(span, tn);
+  });
+
+  // HTML에서 <!-- PLACEHOLDER --> 찾기는 DOM에서 어려우므로 innerHTML 치환 이용
+  document.querySelectorAll('*').forEach(el => {
+    if (el.children.length === 0 && el.innerHTML.trim() === '') return;
+  });
+
+  // 플레이스홀더 주석 → 가시적 블록 (innerHTML 치환)
+  function replaceCommentsInEl(el) {
+    let html = el.innerHTML;
+    let changed = false;
+    Object.entries(placeholderMap).forEach(([key, info]) => {
+      const re = new RegExp(`<!--\\s*${key}\\s*-->`, 'g');
+      if (re.test(html)) {
+        const box = info.compact
+          ? `<div style="border:2px dashed ${info.color}; border-radius:8px; padding:6px 12px; text-align:center; margin:4px 0; background:${info.color}18;">
+              <div style="font-size:9pt; font-weight:800; color:${info.color}; font-family:monospace;">${info.label}</div>
+            </div>`
+          : `<div style="border:3px dashed ${info.color}; border-radius:12px; padding:20px; text-align:center; margin:8px 0; background:${info.color}18;">
+              <div style="font-size:13pt; font-weight:800; color:${info.color}; margin-bottom:6px;">${info.label}</div>
+              <div style="font-size:10pt; color:${info.color}; opacity:0.7; font-family:monospace; font-weight:600;"><!-- ${key} --></div>
+            </div>`;
+        html = html.replace(re, box);
+        changed = true;
+      }
+    });
+    if (changed) el.innerHTML = html;
+  }
+
+  // 최상위 .page 요소들에만 적용 (전체 innerHTML은 너무 위험)
+  document.querySelectorAll('.page').forEach(replaceCommentsInEl);
+
+  // 상단에 범례 배너 추가
+  const legend = document.createElement('div');
+  legend.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:9999; background:#0F172A; color:white; padding:10px 20px; font-size:11pt; display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-family:system-ui;';
+  legend.innerHTML = `
+    <span style="font-weight:800; font-size:13pt; color:#22C55E;">📋 BLANK TEMPLATE</span>
+    <span style="color:#94A3B8; font-size:10pt;">동적 부분 확인 모드</span>
+    <span style="margin-left:auto; display:flex; gap:12px; align-items:center;">
+      <mark style="background:#FEF9C3; color:#92400E; border:1.5px solid #EAB308; border-radius:4px; padding:2px 8px; font-family:monospace; font-weight:700;">{{TOKEN}}</mark>
+      <span style="color:#94A3B8; font-size:9pt;">= 인라인 치환 (단순 문자열 교체)</span>
+      <span style="border:2px dashed #3B82F6; border-radius:4px; padding:2px 8px; font-size:9pt; color:#94A3B8;">점선 블록</span>
+      <span style="color:#94A3B8; font-size:9pt;">= 동적 HTML 삽입 (JS 생성)</span>
+    </span>
+  `;
+  document.body.prepend(legend);
+  document.body.style.paddingTop = '52px';
+})();
+</script>
+</body>
+</html>
+</html>
