@@ -5,7 +5,7 @@ export const maxDuration = 60;
 
 // @sparticuz/chromium-min v143 용 바이너리 URL
 const CHROMIUM_URL =
-  'https://github.com/Sparticuz/chromium/releases/download/v143.0.0/chromium-v143.0.0-pack.tar';
+  'https://github.com/Sparticuz/chromium/releases/download/v143.0.4/chromium-v143.0.4-pack.x64.tar';
 
 export async function POST(req: NextRequest) {
   let queueId: string | undefined;
