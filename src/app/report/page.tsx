@@ -2101,17 +2101,12 @@ function ReportContent() {
     load();
   }, []);
 
-  // print 모드: document 전체를 report HTML로 교체 → Puppeteer가 캡처
-  // __reportReady를 HTML 안 스크립트로 삽입 — document.open() 후 새 컨텍스트에서도 동작
+  // print 모드: HTML을 window 변수에 저장 → Puppeteer가 page.setContent()로 직접 로드
+  // document.write()는 Puppeteer execution context를 파괴하므로 사용 금지
   useEffect(() => {
     if (isPrint && status === 'ready' && html) {
-      const readyScript = '<script>window.__reportReady = true;<\/script>';
-      const htmlWithReady = html.includes('</body>')
-        ? html.replace('</body>', readyScript + '</body>')
-        : html + readyScript;
-      document.open();
-      document.write(htmlWithReady);
-      document.close();
+      (window as any).__reportHtml = html;
+      (window as any).__reportReady = true;
     }
   }, [isPrint, status, html]);
 

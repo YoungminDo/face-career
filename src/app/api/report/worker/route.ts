@@ -61,17 +61,23 @@ export async function POST(req: NextRequest) {
 
     await updateQueueStatus(queueId, { progress: 40 });
 
-    // 3) print 모드로 리포트 페이지 이동 → document.write(html) 후 __reportReady=true
-    await page.goto(`${appUrl}/report?print=1`, { waitUntil: 'networkidle0', timeout: 40000 });
+    // 3) print 모드로 리포트 페이지 이동 → __reportReady + __reportHtml 세팅 대기
+    await page.goto(`${appUrl}/report?print=1`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    await updateQueueStatus(queueId, { progress: 65 });
+    await updateQueueStatus(queueId, { progress: 60 });
 
-    // 4) 준비 신호 대기 (최대 30초)
-    await page.waitForFunction('window.__reportReady === true', { timeout: 30000 });
+    // 4) 준비 신호 대기 (최대 40초) — document.write() 제거, window 변수로 통신
+    await page.waitForFunction('window.__reportReady === true', { timeout: 40000 });
 
-    await updateQueueStatus(queueId, { progress: 80 });
+    await updateQueueStatus(queueId, { progress: 75 });
 
-    // 5) PDF 생성
+    // 5) HTML 추출 후 page.setContent()로 깨끗하게 로드 (context 파괴 없음)
+    const reportHtml = await page.evaluate(() => (window as any).__reportHtml as string);
+    await page.setContent(reportHtml, { waitUntil: 'networkidle0', timeout: 20000 });
+
+    await updateQueueStatus(queueId, { progress: 85 });
+
+    // 6) PDF 생성
     const pdfData = await page.pdf({
       format: 'A4',
       printBackground: true,
