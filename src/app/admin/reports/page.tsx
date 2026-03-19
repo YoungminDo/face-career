@@ -53,7 +53,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState('');
-  const [retrying, setRetrying] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {
     const supabase = createClient(
@@ -89,7 +89,7 @@ export default function ReportsPage() {
   }, []);
 
   const handleRetry = async (queueId: string) => {
-    setRetrying(queueId);
+    setRetrying(prev => new Set(prev).add(queueId));
     try {
       await fetch('/api/report/worker', {
         method: 'POST',
@@ -98,7 +98,7 @@ export default function ReportsPage() {
       });
       setTimeout(loadData, 1500);
     } finally {
-      setRetrying(null);
+      setRetrying(prev => { const s = new Set(prev); s.delete(queueId); return s; });
     }
   };
 
@@ -247,10 +247,10 @@ export default function ReportsPage() {
                           ) : (item.status === 'waiting' || item.status === 'failed') ? (
                             <button
                               onClick={() => handleRetry(item.id)}
-                              disabled={retrying === item.id}
-                              style={{ padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: retrying === item.id ? 'not-allowed' : 'pointer', background: item.status === 'failed' ? '#FEE2E2' : '#DBEAFE', color: item.status === 'failed' ? '#991B1B' : '#1D4ED8' }}
+                              disabled={retrying.has(item.id)}
+                              style={{ padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer', background: item.status === 'failed' ? '#FEE2E2' : '#DBEAFE', color: item.status === 'failed' ? '#991B1B' : '#1D4ED8' }}
                             >
-                              {retrying === item.id ? '실행 중…' : item.status === 'failed' ? '재시도' : '▶ 실행'}
+                              {retrying.has(item.id) ? '실행 중…' : item.status === 'failed' ? '재시도' : '▶ 실행'}
                             </button>
                           ) : (
                             <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
