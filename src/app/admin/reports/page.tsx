@@ -53,6 +53,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState('');
+  const [retrying, setRetrying] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     const supabase = createClient(
@@ -86,6 +87,20 @@ export default function ReportsPage() {
       setLoading(false);
     }
   }, []);
+
+  const handleRetry = async (queueId: string) => {
+    setRetrying(queueId);
+    try {
+      await fetch('/api/report/worker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ queueId }),
+      });
+      setTimeout(loadData, 1500);
+    } finally {
+      setRetrying(null);
+    }
+  };
 
   // 최초 로드 + 처리 중인 항목 있으면 5초마다 자동 갱신
   useEffect(() => {
@@ -219,10 +234,14 @@ export default function ReportsPage() {
                             <a href={item.report_url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #22C55E', fontSize: 11, fontWeight: 600, background: 'white', color: '#22C55E', textDecoration: 'none', display: 'inline-block' }}>
                               다운로드
                             </a>
-                          ) : item.status === 'failed' && item.error_message ? (
-                            <span style={{ fontSize: 11, color: '#EF4444', cursor: 'help' }} title={item.error_message}>
-                              오류 상세 보기
-                            </span>
+                          ) : (item.status === 'waiting' || item.status === 'failed') ? (
+                            <button
+                              onClick={() => handleRetry(item.id)}
+                              disabled={retrying === item.id}
+                              style={{ padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: retrying === item.id ? 'not-allowed' : 'pointer', background: item.status === 'failed' ? '#FEE2E2' : '#DBEAFE', color: item.status === 'failed' ? '#991B1B' : '#1D4ED8' }}
+                            >
+                              {retrying === item.id ? '실행 중…' : item.status === 'failed' ? '재시도' : '▶ 실행'}
+                            </button>
                           ) : (
                             <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
                           )}

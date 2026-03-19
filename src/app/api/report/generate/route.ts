@@ -17,8 +17,10 @@ export async function POST(req: NextRequest) {
     const position = await getQueuePosition(queueId);
     const estimatedSec = await estimateWaitSeconds(position);
 
-    // 백그라운드에서 worker 호출 (non-blocking)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    // 백그라운드에서 worker 호출 (non-blocking) — 절대 URL 필요
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || '';
+    const proto = req.headers.get('x-forwarded-proto') || 'https';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${proto}://${host}`;
     fetch(`${appUrl}/api/report/worker`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
