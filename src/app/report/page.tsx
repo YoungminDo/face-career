@@ -2,7 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { FOCUS_TYPES, ANCHOR_DEFS, COMP_NAMES } from '@/data/mappings';
 import {
   calcFitScores, determineFitType, applyRefine,
@@ -2037,7 +2038,9 @@ function replaceTemplate(html: string, r: any): string {
   return h;
 }
 
-export default function ReportPage() {
+function ReportContent() {
+  const searchParams = useSearchParams();
+  const isPrint = searchParams.get('print') === '1';
   const [status, setStatus] = useState<'loading' | 'no_data' | 'ready'>('loading');
   const [html, setHtml] = useState('');
 
@@ -2098,6 +2101,18 @@ export default function ReportPage() {
     load();
   }, []);
 
+  // print 모드: document 전체를 report HTML로 교체 → Puppeteer가 캡처
+  useEffect(() => {
+    if (isPrint && status === 'ready' && html) {
+      document.open();
+      document.write(html);
+      document.close();
+      (window as any).__reportReady = true;
+    }
+  }, [isPrint, status, html]);
+
+  if (isPrint) return null; // print 모드에서는 React 렌더 안 함
+
   if (status === 'loading') return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-4xl animate-pulse">📊</div>
@@ -2133,5 +2148,13 @@ export default function ReportPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={null}>
+      <ReportContent />
+    </Suspense>
   );
 }

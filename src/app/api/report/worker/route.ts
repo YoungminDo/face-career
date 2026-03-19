@@ -3,144 +3,121 @@ import { getAdminClient, updateQueueStatus } from '@/lib/reportQueue';
 
 export const maxDuration = 60;
 
+// @sparticuz/chromium-min v143 용 바이너리 URL
+const CHROMIUM_URL =
+  'https://github.com/Sparticuz/chromium/releases/download/v143.0.0/chromium-v143.0.0-pack.tar';
+
 export async function POST(req: NextRequest) {
   let queueId: string | undefined;
 
   try {
     const body = await req.json();
     queueId = body.queueId;
-
-    if (!queueId) {
-      return NextResponse.json({ error: 'queueId is required' }, { status: 400 });
-    }
+    if (!queueId) return NextResponse.json({ error: 'queueId is required' }, { status: 400 });
 
     const supabase = getAdminClient();
 
-    // 큐 항목에서 diagnosis_data 조회
+    // 큐 항목 조회
     const { data: queueItem, error: fetchError } = await supabase
       .from('report_queue')
       .select('id, diagnosis_data, status')
       .eq('id', queueId)
       .single();
 
-    if (fetchError || !queueItem) {
-      return NextResponse.json({ error: 'Queue item not found' }, { status: 404 });
-    }
-
-    // 이미 처리 중이거나 완료된 경우 스킵
+    if (fetchError || !queueItem) return NextResponse.json({ error: 'Queue item not found' }, { status: 404 });
     if (queueItem.status === 'processing' || queueItem.status === 'completed') {
       return NextResponse.json({ message: 'Already processing or completed' });
     }
 
-    const diagnosisData = queueItem.diagnosis_data;
+    await updateQueueStatus(queueId, { status: 'processing', started_at: new Date().toISOString(), progress: 10 });
 
-    // status → 'processing', started_at 업데이트
-    await updateQueueStatus(queueId, {
-      status: 'processing',
-      started_at: new Date().toISOString(),
-      progress: 10,
+    // ── Puppeteer ──────────────────────────────────────────────
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const chromium = require('@sparticuz/chromium-min');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const puppeteer = require('puppeteer-core');
+
+    const executablePath = process.env.CHROMIUM_PATH || await chromium.executablePath(CHROMIUM_URL);
+
+    const browser = await puppeteer.launch({
+      executablePath,
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      headless: chromium.headless ?? true,
+      defaultViewport: { width: 1240, height: 1754 },
     });
 
-    // HTML 생성
-    // TODO: import { computeAll, replaceTemplate } from '@/lib/reportTemplate';
-    // const r = computeAll(diagnosisData);
-    // const html = replaceTemplate(templateHtml, r);
-    const html = `<html><body style="font-family:sans-serif;padding:40px;background:#0F172A;color:white;">
-      <h1 style="color:#22C55E;">FACE Career Report</h1>
-      <p>Queue ID: ${queueId}</p>
-      <pre style="background:#1E293B;padding:20px;border-radius:8px;overflow:auto;font-size:12px;">${JSON.stringify(diagnosisData, null, 2)}</pre>
-    </body></html>`;
+    await updateQueueStatus(queueId, { progress: 25 });
 
-    await updateQueueStatus(queueId, { progress: 30 });
+    const page = await browser.newPage();
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://face.da-sh.io';
 
-    // Puppeteer로 PDF 생성
-    let pdfBuffer: Buffer;
+    // 1) 도메인 방문 → localStorage 설정 가능 상태
+    await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const chromium = require('@sparticuz/chromium-min');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const puppeteer = require('puppeteer-core');
+    // 2) 진단 데이터 localStorage에 주입
+    await page.evaluate((data: any) => {
+      localStorage.setItem('face_diagnosis', JSON.stringify(data));
+    }, queueItem.diagnosis_data);
 
-      const executablePath = await chromium.executablePath();
+    await updateQueueStatus(queueId, { progress: 40 });
 
-      const browser = await puppeteer.launch({
-        executablePath,
-        args: chromium.args,
-        headless: chromium.headless,
-        defaultViewport: { width: 1240, height: 1754 },
-      });
+    // 3) print 모드로 리포트 페이지 이동 → document.write(html) 후 __reportReady=true
+    await page.goto(`${appUrl}/report?print=1`, { waitUntil: 'networkidle0', timeout: 40000 });
 
-      await updateQueueStatus(queueId, { progress: 50 });
+    await updateQueueStatus(queueId, { progress: 65 });
 
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+    // 4) 준비 신호 대기 (최대 30초)
+    await page.waitForFunction('window.__reportReady === true', { timeout: 30000 });
 
-      await updateQueueStatus(queueId, { progress: 70 });
+    await updateQueueStatus(queueId, { progress: 80 });
 
-      const pdfData = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: 0, bottom: 0, left: 0, right: 0 },
-      });
+    // 5) PDF 생성
+    const pdfData = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: 0, bottom: 0, left: 0, right: 0 },
+      scale: 0.95,
+    });
 
-      await browser.close();
+    await browser.close();
+    // ── Puppeteer 끝 ───────────────────────────────────────────
 
-      pdfBuffer = Buffer.from(pdfData);
-    } catch (puppeteerErr: any) {
-      console.error('[worker] puppeteer error:', puppeteerErr);
-      throw new Error('PDF 생성 실패: ' + (puppeteerErr?.message || 'Unknown puppeteer error'));
-    }
+    await updateQueueStatus(queueId, { progress: 90 });
 
-    await updateQueueStatus(queueId, { progress: 85 });
-
-    // Supabase Storage에 업로드
+    // Storage 업로드
     const storagePath = `reports/${queueId}.pdf`;
+    const pdfBuffer = Buffer.from(pdfData);
+
     const { error: uploadError } = await supabase.storage
       .from('report-files')
-      .upload(storagePath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      });
+      .upload(storagePath, pdfBuffer, { contentType: 'application/pdf', upsert: true });
 
-    if (uploadError) {
-      throw new Error('Storage 업로드 실패: ' + uploadError.message);
-    }
+    if (uploadError) throw new Error('Storage 업로드 실패: ' + uploadError.message);
 
-    await updateQueueStatus(queueId, { progress: 95 });
-
-    // 공개 URL 생성
-    const { data: publicUrlData } = supabase.storage
+    // Signed URL (30일 유효)
+    const { data: signedData, error: signErr } = await supabase.storage
       .from('report-files')
-      .getPublicUrl(storagePath);
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 30);
 
-    const reportUrl = publicUrlData?.publicUrl;
+    if (signErr || !signedData?.signedUrl) throw new Error('URL 생성 실패');
 
-    if (!reportUrl) {
-      throw new Error('Public URL 생성 실패');
-    }
-
-    // 완료 업데이트
     await updateQueueStatus(queueId, {
       status: 'completed',
-      report_url: reportUrl,
+      report_url: signedData.signedUrl,
       completed_at: new Date().toISOString(),
       progress: 100,
     });
 
-    return NextResponse.json({ success: true, reportUrl });
+    return NextResponse.json({ success: true, reportUrl: signedData.signedUrl });
+
   } catch (err: any) {
     console.error('[worker] error:', err);
-
     if (queueId) {
       await updateQueueStatus(queueId, {
         status: 'failed',
         error_message: err?.message || 'Unknown error',
-      }).catch((updateErr) => {
-        console.error('[worker] failed to update error status:', updateErr);
-      });
+      }).catch(() => {});
     }
-
     return NextResponse.json({ error: err?.message || 'Internal server error' }, { status: 500 });
   }
 }
