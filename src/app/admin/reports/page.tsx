@@ -232,7 +232,12 @@ export default function ReportsPage() {
                             <span style={{ color: '#CBD5E1' }}>—</span>
                           )}
                         </td>
-                        <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>{formatDate(item.created_at)}</td>
+                        <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>
+                          {formatDate(item.started_at || item.created_at)}
+                          {item.started_at && item.started_at !== item.created_at && (
+                            <div style={{ fontSize: 10, color: '#CBD5E1' }}>최초: {formatDate(item.created_at)}</div>
+                          )}
+                        </td>
                         <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>{formatDate(item.completed_at)}</td>
                         <td style={{ ...td, textAlign: 'center' }}>
                           {item.report_url ? (
