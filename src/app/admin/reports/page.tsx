@@ -121,6 +121,13 @@ export default function ReportsPage() {
     return () => clearInterval(interval);
   }, [items, loadData]);
 
+  // 실행 중인 항목 있으면 2초마다 갱신
+  useEffect(() => {
+    if (retrying.size === 0) return;
+    const interval = setInterval(loadData, 2000);
+    return () => clearInterval(interval);
+  }, [retrying, loadData]);
+
   const th: React.CSSProperties = {
     padding: '12px 16px', textAlign: 'left', fontWeight: 600,
     color: '#64748B', fontSize: 12, whiteSpace: 'nowrap',
@@ -207,7 +214,9 @@ export default function ReportsPage() {
                 </thead>
                 <tbody>
                   {items.map(item => {
-                    const cfg = STATUS_CONFIG[item.status] || { label: item.status, color: '#64748B', bg: '#F1F5F9' };
+                    const isRetrying = retrying.has(item.id);
+                    const displayStatus = isRetrying ? 'processing' : item.status;
+                    const cfg = STATUS_CONFIG[displayStatus] || { label: displayStatus, color: '#64748B', bg: '#F1F5F9' };
                     return (
                       <tr key={item.id}>
                         <td style={{ ...td, fontFamily: 'monospace', color: '#64748B', fontSize: 11 }}>
@@ -220,19 +229,19 @@ export default function ReportsPage() {
                           <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>
                             {cfg.label}
                           </span>
-                          {item.status === 'failed' && item.error_message && (
+                          {!isRetrying && item.status === 'failed' && item.error_message && (
                             <div style={{ fontSize: 10, color: '#EF4444', marginTop: 4, maxWidth: 200, wordBreak: 'break-all', lineHeight: 1.4 }}>
                               {item.error_message}
                             </div>
                           )}
                         </td>
                         <td style={{ ...td, textAlign: 'center' }}>
-                          {item.status === 'processing' ? (
+                          {(displayStatus === 'processing') ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
                               <div style={{ width: 60, height: 6, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${item.progress}%`, background: '#3B82F6', borderRadius: 3 }} />
+                                <div style={{ height: '100%', width: isRetrying ? '30%' : `${item.progress}%`, background: '#3B82F6', borderRadius: 3, transition: 'width 0.5s' }} />
                               </div>
-                              <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600 }}>{item.progress}%</span>
+                              <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600 }}>{isRetrying ? '…' : `${item.progress}%`}</span>
                             </div>
                           ) : item.status === 'completed' ? (
                             <span style={{ color: '#22C55E', fontWeight: 700 }}>100%</span>
