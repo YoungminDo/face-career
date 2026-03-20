@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminClient, updateQueueStatus } from '@/lib/reportQueue';
+import { computeAll, replaceTemplate } from '@/lib/reportEngine';
 
 export const maxDuration = 60;
 
@@ -29,20 +30,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Already processing or completed' });
     }
 
+    // 1) 서버사이드 HTML 생성 (Puppeteer 불필요)
+    const diagData = queueItem.diagnosis_data;
+    if (!diagData || typeof diagData !== 'object') {
+      throw new Error('diagnosis_data 없음 또는 형식 오류');
+    }
+
     await updateQueueStatus(queueId, { status: 'processing', started_at: new Date().toISOString(), progress: 10 });
 
-    // ── Puppeteer ──────────────────────────────────────────────
+    const r = computeAll(diagData);
+    if (!r) throw new Error('computeAll 실패: 진단 데이터 형식 오류');
+
+    await updateQueueStatus(queueId, { progress: 25 });
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs');
+    const templateHtml = fs.readFileSync(
+      require('path').join(process.cwd(), 'public/report-template.html'),
+      'utf-8'
+    );
+    const finalHtml = replaceTemplate(templateHtml, r);
+
+    await updateQueueStatus(queueId, { progress: 40 });
+
+    // ── Puppeteer: setContent → PDF (navigate 없음) ──────────────
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const chromium = require('@sparticuz/chromium-min');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const puppeteer = require('puppeteer-core');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require('fs');
 
     const executablePath = process.env.CHROMIUM_PATH || await chromium.executablePath(CHROMIUM_URL);
     console.log('[worker] chromium path:', executablePath, '| exists:', fs.existsSync(executablePath));
 
-    // spawn ENOENT/ETXTBSY 방지: 실행 권한 보장 + 충돌 시 재시도
     if (!process.env.CHROMIUM_PATH && fs.existsSync(executablePath)) {
       try { fs.chmodSync(executablePath, 0o755); } catch {}
     }
@@ -60,70 +79,25 @@ export async function POST(req: NextRequest) {
       } catch (e: any) {
         console.warn(`[worker] launch attempt ${attempt} failed:`, e.message);
         if (attempt < 3 && (e.message?.includes('ETXTBSY') || e.message?.includes('ENOENT'))) {
-          await new Promise(r => setTimeout(r, 2000 * attempt));
+          await new Promise(res => setTimeout(res, 2000 * attempt));
         } else {
           throw e;
         }
       }
     }
 
-    await updateQueueStatus(queueId, { progress: 25 });
+    await updateQueueStatus(queueId, { progress: 60 });
 
     const page = await browser.newPage();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://face.da-sh.io';
-
-    // 페이지 콘솔 로그 캡처 (디버그용)
     page.on('console', (msg: any) => console.log('[page]', msg.type(), msg.text()));
     page.on('pageerror', (err: any) => console.error('[page error]', err.message));
 
-    // 1) 도메인 방문 → localStorage 설정 가능 상태
-    await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    // 페이지 navigate 없이 바로 HTML 주입 → waitForFunction 불필요
+    await page.setContent(finalHtml, { waitUntil: 'networkidle0', timeout: 20000 });
 
-    // 2) 진단 데이터 유효성 확인 후 localStorage 주입
-    const diagData = queueItem.diagnosis_data;
-    if (!diagData || typeof diagData !== 'object') {
-      throw new Error('diagnosis_data 없음 또는 형식 오류');
-    }
-    console.log('[worker] diagnosis_data keys:', Object.keys(diagData));
+    await updateQueueStatus(queueId, { progress: 80 });
 
-    // 템플릿 파일을 서버에서 직접 읽어 localStorage에 주입
-    // → Puppeteer 브라우저의 fetch('/report-template.html') 네트워크 왕복 제거
-    const templateHtml = fs.readFileSync(
-      require('path').join(process.cwd(), 'public/report-template.html'),
-      'utf-8'
-    );
-
-    await page.evaluate((data: any, template: string) => {
-      localStorage.setItem('face_diagnosis', JSON.stringify(data));
-      localStorage.setItem('face_report_template', template);
-      console.log('[inject] face_diagnosis keys:', Object.keys(data || {}), '| template length:', template.length);
-    }, diagData, templateHtml);
-
-    await updateQueueStatus(queueId, { progress: 40 });
-
-    // 3) print 모드로 리포트 페이지 이동 → __reportReady + __reportHtml 세팅 대기
-    await page.goto(`${appUrl}/report?print=1`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-    await updateQueueStatus(queueId, { progress: 60 });
-
-    // 4) 준비 신호 대기 (최대 45초) — __reportReady 또는 __reportError 감지
-    await page.waitForFunction(
-      'window.__reportReady === true || window.__reportError != null',
-      { timeout: 45000 }
-    );
-    const reportError = await page.evaluate(() => (window as any).__reportError);
-    console.log('[worker] __reportError:', reportError, '| __reportReady:', await page.evaluate(() => (window as any).__reportReady));
-    if (reportError) throw new Error(`리포트 페이지 오류: ${reportError}`);
-
-    await updateQueueStatus(queueId, { progress: 75 });
-
-    // 5) HTML 추출 후 page.setContent()로 깨끗하게 로드 (context 파괴 없음)
-    const reportHtml = await page.evaluate(() => (window as any).__reportHtml as string);
-    await page.setContent(reportHtml, { waitUntil: 'networkidle0', timeout: 20000 });
-
-    await updateQueueStatus(queueId, { progress: 85 });
-
-    // 6) PDF 생성
+    // PDF 생성
     const pdfData = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -132,7 +106,7 @@ export async function POST(req: NextRequest) {
     });
 
     await browser.close();
-    // ── Puppeteer 끝 ───────────────────────────────────────────
+    // ── Puppeteer 끝 ─────────────────────────────────────────────
 
     await updateQueueStatus(queueId, { progress: 90 });
 
