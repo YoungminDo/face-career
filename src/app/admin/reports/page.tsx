@@ -95,13 +95,13 @@ export default function ReportsPage() {
     window.open('/report', '_blank');
   };
 
-  const handleRetry = async (queueId: string) => {
+  const handleRetry = async (queueId: string, force = false) => {
     setRetrying(prev => new Set(prev).add(queueId));
     try {
       await fetch('/api/report/worker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queueId }),
+        body: JSON.stringify({ queueId, force }),
       });
       setTimeout(loadData, 1500);
     } finally {
@@ -270,9 +270,19 @@ export default function ReportsPage() {
                         </td>
                         <td style={{ ...td, textAlign: 'center' }}>
                           {item.report_url ? (
-                            <a href={item.report_url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #22C55E', fontSize: 11, fontWeight: 600, background: 'white', color: '#22C55E', textDecoration: 'none', display: 'inline-block' }}>
-                              다운로드
-                            </a>
+                            <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
+                              <a href={item.report_url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #22C55E', fontSize: 11, fontWeight: 600, background: 'white', color: '#22C55E', textDecoration: 'none', display: 'inline-block' }}>
+                                다운로드
+                              </a>
+                              <button
+                                onClick={() => handleRetry(item.id, true)}
+                                disabled={retrying.has(item.id)}
+                                title="재생성"
+                                style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 11, background: 'white', color: '#94A3B8', cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer' }}
+                              >
+                                {retrying.has(item.id) ? '…' : '↺'}
+                              </button>
+                            </div>
                           ) : (item.status === 'waiting' || item.status === 'failed') ? (
                             <button
                               onClick={() => handleRetry(item.id)}

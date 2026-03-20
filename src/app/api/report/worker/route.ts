@@ -26,8 +26,11 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (fetchError || !queueItem) return NextResponse.json({ error: 'Queue item not found' }, { status: 404 });
-    if (queueItem.status === 'processing' || queueItem.status === 'completed') {
-      return NextResponse.json({ message: 'Already processing or completed' });
+    if (queueItem.status === 'processing') {
+      return NextResponse.json({ message: 'Already processing' });
+    }
+    if (queueItem.status === 'completed' && !body.force) {
+      return NextResponse.json({ message: 'Already completed. Pass force:true to regenerate.' });
     }
 
     // 1) 서버사이드 HTML 생성 (Puppeteer 불필요)
