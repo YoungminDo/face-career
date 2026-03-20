@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
@@ -185,6 +185,7 @@ export default function DiagnosisPage() {
       completedAt: new Date().toISOString(),
     };
     localStorage.setItem('face_diagnosis', JSON.stringify(data));
+    localStorage.removeItem('face_diagnosis_draft'); // draft 삭제
 
     // 진단 히스토리 저장 (localStorage)
     const history = JSON.parse(localStorage.getItem('face_diagnosis_history') || '[]');
@@ -235,6 +236,83 @@ export default function DiagnosisPage() {
   const canGoBack = !(phase === 'energy' && qIdx === 0);
 
   // =============================================
+  // 1중 방어: 이어서 하기 (draft 복원)
+  // =============================================
+  const [hasDraft, setHasDraft] = useState(false);
+  const isInProgress = phase !== 'intro' && phase !== 'userinfo' && phase !== 'userinfo2' && phase !== 'complete';
+
+  const restoreFromDraft = useCallback(() => {
+    try {
+      const raw = localStorage.getItem('face_diagnosis_draft');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.phase) setPhase(d.phase);
+      if (d.qIdx != null) setQIdx(d.qIdx);
+      if (d.answered != null) setAnswered(d.answered);
+      if (d.userName) setUserName(d.userName);
+      if (d.birthYear) setBirthYear(d.birthYear);
+      if (d.gender) setGender(d.gender);
+      if (d.currentStatus) setCurrentStatus(d.currentStatus);
+      if (d.hasDesiredJob != null) setHasDesiredJob(d.hasDesiredJob);
+      if (d.desiredJob) setDesiredJob(d.desiredJob);
+      if (d.energyAnswers?.length) setEnergyAnswers(d.energyAnswers);
+      if (d.focusAnswers?.length) setFocusAnswers(d.focusAnswers);
+      if (d.refineAnswers?.length) setRefineAnswers(d.refineAnswers);
+      if (d.anchorLikertAns?.length) setAnchorLikertAns(d.anchorLikertAns);
+      if (d.anchorTradeoffAns?.length) setAnchorTradeoffAns(d.anchorTradeoffAns);
+      if (d.anchorInterestAns?.length) setAnchorInterestAns(d.anchorInterestAns);
+      if (d.capacityAnswers?.length) setCapacityAnswers(d.capacityAnswers);
+      if (d.focusResult) setFocusResult(d.focusResult);
+      if (d.anchorResult) setAnchorResult(d.anchorResult);
+      setHasDraft(false);
+    } catch {}
+  }, []);
+
+  // 마운트 시 draft 여부 확인
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('face_diagnosis_draft');
+      if (raw) {
+        const d = JSON.parse(raw);
+        // energy 이후 단계에서 중단된 경우만 복원 제안
+        const recoverable: Phase[] = ['energy','focus','focus_refine','anchor_likert','anchor_tradeoff','anchor_interest','capacity'];
+        if (recoverable.includes(d.phase)) setHasDraft(true);
+      }
+    } catch {}
+  }, []);
+
+  // 2중 방어: 매 답변마다 자동저장
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!isInProgress) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem('face_diagnosis_draft', JSON.stringify({
+          phase, qIdx, answered,
+          userName, birthYear, gender, currentStatus, hasDesiredJob, desiredJob,
+          energyAnswers, focusAnswers, refineAnswers,
+          anchorLikertAns, anchorTradeoffAns, anchorInterestAns,
+          capacityAnswers, focusResult, anchorResult,
+          savedAt: new Date().toISOString(),
+        }));
+      } catch {}
+    }, 300);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [phase, qIdx, energyAnswers, focusAnswers, refineAnswers, anchorLikertAns, anchorTradeoffAns, anchorInterestAns, capacityAnswers, isInProgress, answered, userName, birthYear, gender, currentStatus, hasDesiredJob, desiredJob, focusResult, anchorResult]);
+
+  // 3중 방어: 진단 중 탭 닫기/뒤로가기 경고
+  useEffect(() => {
+    if (!isInProgress) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '진단이 자동 저장되었습니다. 나중에 이어서 할 수 있습니다.';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isInProgress]);
+
+  // =============================================
   // RENDER
   // =============================================
 
@@ -245,6 +323,24 @@ export default function DiagnosisPage() {
         <div className="text-4xl font-black text-[#22C55E] mb-2">FACE</div>
         <h2 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>커리어 진단을 시작합니다</h2>
         <p className="text-sm mb-8" style={{ color: '#6B7280' }}>편하게 답해주세요. 정답은 없습니다.</p>
+
+        {/* 이어서 하기 배너 */}
+        {hasDraft && (
+          <div className="mb-6 rounded-2xl border border-[#8B5CF6] bg-purple-50 p-4 text-left">
+            <div className="text-sm font-bold text-[#8B5CF6] mb-1">⚡ 이전 진단이 저장되어 있어요</div>
+            <p className="text-xs text-gray-500 mb-3">중단된 곳부터 이어서 진단할 수 있습니다.</p>
+            <div className="flex gap-2">
+              <button onClick={restoreFromDraft}
+                className="flex-1 bg-[#8B5CF6] text-white text-sm font-bold py-2.5 rounded-xl">
+                이어서 하기
+              </button>
+              <button onClick={() => { localStorage.removeItem('face_diagnosis_draft'); setHasDraft(false); }}
+                className="px-4 py-2.5 text-xs text-gray-400 border border-gray-200 rounded-xl">
+                새로 시작
+              </button>
+            </div>
+          </div>
+        )}
         <div className="bg-gray-50 rounded-2xl p-5 mb-8 text-left space-y-3">
           {[
             { c: '#8B5CF6', l: 'Energy (마음 상태)', n: '16문항' },
