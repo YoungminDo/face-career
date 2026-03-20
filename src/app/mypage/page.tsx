@@ -3,6 +3,8 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import { FOCUS_TYPES } from '@/data/mappings';
 
 const CODE_TO_TYPE: Record<string, string> = { Em: 'Empathy', Cr: 'Creative', Op: 'Operative', Ar: 'Architect' };
@@ -15,9 +17,21 @@ interface DiagnosisRecord {
   desiredJob?: string;
 }
 
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export default function MyPage() {
+  const router = useRouter();
   const [history, setHistory] = useState<DiagnosisRecord[]>([]);
   const [currentData, setCurrentData] = useState<DiagnosisRecord | null>(null);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('face_diagnosis');
+    router.push('/login');
+  };
 
   useEffect(() => {
     const h = JSON.parse(localStorage.getItem('face_diagnosis_history') || '[]');
@@ -59,7 +73,15 @@ export default function MyPage() {
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-black">마이페이지</h1>
-          <a href="/" className="text-sm text-gray-400">← 홈</a>
+          <div className="flex items-center gap-3">
+            <a href="/" className="text-sm text-gray-400">← 홈</a>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-red-400 font-medium hover:text-red-600 transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
 
         {/* 현재 프로필 */}

@@ -3,6 +3,8 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import { FOCUS_TYPES, ANCHOR_DEFS, COMP_NAMES } from '@/data/mappings';
 import {
   calcFitScores, determineFitType, applyRefine,
@@ -14,9 +16,21 @@ import { JOB_COMPETENCY_MAPPING } from '@/data/mappings';
 import type { FocusCode, AnchorKey } from '@/data/types';
 import { anchorLikertQuestions } from '@/data/questions';
 
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export default function ResultPage() {
+  const router = useRouter();
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('face_diagnosis');
+    router.push('/login');
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem('face_diagnosis');
@@ -127,6 +141,14 @@ export default function ResultPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-lg mx-auto px-4 py-8">
+
+        {/* 상단 네비 */}
+        <div className="flex justify-between items-center mb-6">
+          <a href="/mypage" className="text-sm text-gray-400">← 마이페이지</a>
+          <button onClick={handleLogout} className="text-sm text-red-400 font-medium hover:text-red-600 transition-colors">
+            로그아웃
+          </button>
+        </div>
 
         {/* 유형 히어로 */}
         <div className="text-center mb-6">
