@@ -2089,9 +2089,18 @@ function ReportContent() {
 
         if (!r) { setStatus('no_data'); return; }
 
-        const res = await fetch('/report-template.html');
-        if (!res.ok) throw new Error(`template fetch failed: ${res.status}`);
-        const template = await res.text();
+        // Puppeteer print 모드에서는 worker가 localStorage에 주입한 템플릿 우선 사용
+        // → 네트워크 왕복 없이 즉시 사용 가능
+        const cachedTemplate = localStorage.getItem('face_report_template');
+        let template: string;
+        if (cachedTemplate) {
+          console.log('[report] using cached template from localStorage, length:', cachedTemplate.length);
+          template = cachedTemplate;
+        } else {
+          const res = await fetch('/report-template.html');
+          if (!res.ok) throw new Error(`template fetch failed: ${res.status}`);
+          template = await res.text();
+        }
         const finalHtml = replaceTemplate(template, r);
         setHtml(finalHtml);
         setStatus('ready');

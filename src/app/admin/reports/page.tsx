@@ -15,6 +15,7 @@ interface QueueItem {
   created_at: string;
   completed_at: string | null;
   started_at: string | null;
+  diagnosis_data: any | null;
 }
 
 interface Stats {
@@ -63,7 +64,7 @@ export default function ReportsPage() {
     try {
       const { data, error: fetchErr } = await supabase
         .from('report_queue')
-        .select('id, user_id, status, progress, report_url, error_message, created_at, completed_at, started_at')
+        .select('id, user_id, status, progress, report_url, error_message, created_at, completed_at, started_at, diagnosis_data')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -87,6 +88,12 @@ export default function ReportsPage() {
       setLoading(false);
     }
   }, []);
+
+  const handleWebView = (item: QueueItem) => {
+    if (!item.diagnosis_data) return alert('진단 데이터가 없습니다.');
+    localStorage.setItem('face_diagnosis', JSON.stringify(item.diagnosis_data));
+    window.open('/report', '_blank');
+  };
 
   const handleRetry = async (queueId: string) => {
     setRetrying(prev => new Set(prev).add(queueId));
@@ -194,7 +201,8 @@ export default function ReportsPage() {
                     <th style={{ ...th, textAlign: 'center' }}>진행도</th>
                     <th style={th}>요청일시</th>
                     <th style={th}>완료일시</th>
-                    <th style={{ ...th, textAlign: 'center' }}>리포트</th>
+                    <th style={{ ...th, textAlign: 'center' }}>웹 보기</th>
+                    <th style={{ ...th, textAlign: 'center' }}>PDF</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -239,6 +247,18 @@ export default function ReportsPage() {
                           )}
                         </td>
                         <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>{formatDate(item.completed_at)}</td>
+                        <td style={{ ...td, textAlign: 'center' }}>
+                          {item.diagnosis_data ? (
+                            <button
+                              onClick={() => handleWebView(item)}
+                              style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #8B5CF6', fontSize: 11, fontWeight: 600, background: 'white', color: '#8B5CF6', cursor: 'pointer' }}
+                            >
+                              웹 보기
+                            </button>
+                          ) : (
+                            <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
+                          )}
+                        </td>
                         <td style={{ ...td, textAlign: 'center' }}>
                           {item.report_url ? (
                             <a href={item.report_url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #22C55E', fontSize: 11, fontWeight: 600, background: 'white', color: '#22C55E', textDecoration: 'none', display: 'inline-block' }}>

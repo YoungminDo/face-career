@@ -101,15 +101,37 @@ export default function MyPage() {
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <a href="/result" className="flex-1 text-center py-2.5 rounded-xl bg-[#22C55E] text-white text-sm font-bold">
-                결과 보기
-              </a>
-              <a href="/report" className="flex-1 text-center py-2.5 rounded-xl bg-[#0F172A] text-white text-sm font-bold">
-                프리미엄 리포트
-              </a>
-            </div>
+            <a href="/result" className="block w-full text-center py-2.5 rounded-xl bg-[#22C55E] text-white text-sm font-bold mb-2">
+              결과 요약 보기
+            </a>
           </div>
+        )}
+
+        {/* 리포트 뷰어 카드 */}
+        {currentData && (
+          <a href="/report" className="block bg-gradient-to-br from-[#0F172A] to-[#1E293B] rounded-2xl p-5 mb-6 text-white no-underline hover:opacity-90 transition-opacity">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📄</span>
+                <span className="font-black text-base">FACE 프리미엄 리포트</span>
+              </div>
+              <span className="text-xs bg-white/10 px-2 py-1 rounded-full">웹 뷰어</span>
+            </div>
+            <p className="text-sm text-white/60 mb-4 leading-relaxed">
+              Focus · Anchor · Capacity · Energy<br/>4가지 모듈 상세 분석 리포트를 확인하세요
+            </p>
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                {['F', 'A', 'C', 'E'].map((l, i) => (
+                  <span key={l} className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
+                    style={{ background: ['#22C55E','#F59E0B','#3B82F6','#8B5CF6'][i] }}>
+                    {l}
+                  </span>
+                ))}
+              </div>
+              <span className="text-sm font-bold text-white/80">리포트 보기 →</span>
+            </div>
+          </a>
         )}
 
         {/* 진단 이력 */}

@@ -85,11 +85,19 @@ export async function POST(req: NextRequest) {
       throw new Error('diagnosis_data 없음 또는 형식 오류');
     }
     console.log('[worker] diagnosis_data keys:', Object.keys(diagData));
-    await page.evaluate((data: any) => {
+
+    // 템플릿 파일을 서버에서 직접 읽어 localStorage에 주입
+    // → Puppeteer 브라우저의 fetch('/report-template.html') 네트워크 왕복 제거
+    const templateHtml = fs.readFileSync(
+      require('path').join(process.cwd(), 'public/report-template.html'),
+      'utf-8'
+    );
+
+    await page.evaluate((data: any, template: string) => {
       localStorage.setItem('face_diagnosis', JSON.stringify(data));
-      // Puppeteer print 모드 — Supabase 건너뜀 (auth timeout 방지)
-      console.log('[inject] face_diagnosis keys:', Object.keys(data || {}));
-    }, diagData);
+      localStorage.setItem('face_report_template', template);
+      console.log('[inject] face_diagnosis keys:', Object.keys(data || {}), '| template length:', template.length);
+    }, diagData, templateHtml);
 
     await updateQueueStatus(queueId, { progress: 40 });
 
