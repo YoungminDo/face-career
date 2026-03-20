@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
           executablePath,
           args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
           headless: chromium.headless ?? true,
-          defaultViewport: { width: 1240, height: 1754 },
+          defaultViewport: { width: 794, height: 1123 },
         });
         break;
       } catch (e: any) {
@@ -102,7 +102,8 @@ export async function POST(req: NextRequest) {
       format: 'A4',
       printBackground: true,
       margin: { top: 0, bottom: 0, left: 0, right: 0 },
-      scale: 0.95,
+      preferCSSPageSize: true,
+      scale: 1.0,
     });
 
     await browser.close();
