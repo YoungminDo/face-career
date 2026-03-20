@@ -2046,60 +2046,65 @@ function ReportContent() {
 
   useEffect(() => {
     async function load() {
-      // 1. localStorage 우선
-      let r: any = null;
-      try { r = computeAll(); } catch (e) { console.error('computeAll error:', e); }
+      try {
+        // 1. localStorage 우선
+        let r: any = null;
+        try { r = computeAll(); } catch (e) { console.error('[report] computeAll error:', e); }
 
-      // 2. localStorage 없으면 Supabase에서 최신 진단 로드
-      if (!r) {
-        try {
-          const { createClient } = await import('@supabase/supabase-js');
-          const sb = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-          );
-          const { data: { user } } = await sb.auth.getUser();
-          if (user) {
-            // users 테이블에서 user_id 조회
-            const { data: profile } = await sb.from('users').select('id, name').eq('auth_id', user.id).single();
-            if (profile) {
-              // 최신 진단 1건 조회
-              const { data: diag } = await sb
-                .from('diagnoses')
-                .select('answers, desired_job')
-                .eq('user_id', profile.id)
-                .eq('status', 'completed')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-              if (diag?.answers) {
-                const restored = { ...diag.answers, userName: profile.name, desiredJob: diag.desired_job };
-                // localStorage에도 복원해두기
-                localStorage.setItem('face_diagnosis', JSON.stringify(restored));
-                r = computeAll(restored);
+        // 2. print 모드(Puppeteer)에서는 Supabase 건너뜀 — getUser()가 헤드리스 브라우저에서 무한 대기할 수 있음
+        if (!r && !isPrint) {
+          try {
+            const { createClient } = await import('@supabase/supabase-js');
+            const sb = createClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            );
+            // 5초 타임아웃 적용
+            const { data: { user } } = await Promise.race([
+              sb.auth.getUser(),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('auth timeout')), 5000)),
+            ]) as any;
+            if (user) {
+              const { data: profile } = await sb.from('users').select('id, name').eq('auth_id', user.id).single();
+              if (profile) {
+                const { data: diag } = await sb
+                  .from('diagnoses')
+                  .select('answers, desired_job')
+                  .eq('user_id', profile.id)
+                  .eq('status', 'completed')
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .single();
+                if (diag?.answers) {
+                  const restored = { ...diag.answers, userName: profile.name, desiredJob: diag.desired_job };
+                  localStorage.setItem('face_diagnosis', JSON.stringify(restored));
+                  r = computeAll(restored);
+                }
               }
             }
+          } catch (e) {
+            console.error('[report] Supabase fallback failed:', e);
           }
-        } catch (e) {
-          console.error('Supabase fallback failed:', e);
         }
-      }
 
-      if (!r) { setStatus('no_data'); return; }
+        if (!r) { setStatus('no_data'); return; }
 
-      try {
         const res = await fetch('/report-template.html');
+        if (!res.ok) throw new Error(`template fetch failed: ${res.status}`);
         const template = await res.text();
         const finalHtml = replaceTemplate(template, r);
         setHtml(finalHtml);
         setStatus('ready');
-      } catch {
+      } catch (e: any) {
+        console.error('[report] load error:', e);
+        // print 모드에서는 즉시 에러 신호 — Puppeteer waitForFunction이 감지
+        if (isPrint) (window as any).__reportError = e?.message || 'load error';
         setStatus('no_data');
       }
     }
 
     load();
-  }, []);
+  }, [isPrint]);
 
   // print 모드: HTML을 window 변수에 저장 → Puppeteer가 page.setContent()로 직접 로드
   // document.write()는 Puppeteer execution context를 파괴하므로 사용 금지

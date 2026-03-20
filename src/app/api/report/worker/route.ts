@@ -79,11 +79,17 @@ export async function POST(req: NextRequest) {
     // 1) 도메인 방문 → localStorage 설정 가능 상태
     await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
-    // 2) 진단 데이터 localStorage에 주입
+    // 2) 진단 데이터 유효성 확인 후 localStorage 주입
+    const diagData = queueItem.diagnosis_data;
+    if (!diagData || typeof diagData !== 'object') {
+      throw new Error('diagnosis_data 없음 또는 형식 오류');
+    }
+    console.log('[worker] diagnosis_data keys:', Object.keys(diagData));
     await page.evaluate((data: any) => {
       localStorage.setItem('face_diagnosis', JSON.stringify(data));
+      // Puppeteer print 모드 — Supabase 건너뜀 (auth timeout 방지)
       console.log('[inject] face_diagnosis keys:', Object.keys(data || {}));
-    }, queueItem.diagnosis_data);
+    }, diagData);
 
     await updateQueueStatus(queueId, { progress: 40 });
 
@@ -92,12 +98,13 @@ export async function POST(req: NextRequest) {
 
     await updateQueueStatus(queueId, { progress: 60 });
 
-    // 4) 준비 신호 대기 (최대 40초) — __reportReady 또는 __reportError 감지
+    // 4) 준비 신호 대기 (최대 45초) — __reportReady 또는 __reportError 감지
     await page.waitForFunction(
-      'window.__reportReady === true || window.__reportError',
-      { timeout: 40000 }
+      'window.__reportReady === true || window.__reportError != null',
+      { timeout: 45000 }
     );
     const reportError = await page.evaluate(() => (window as any).__reportError);
+    console.log('[worker] __reportError:', reportError, '| __reportReady:', await page.evaluate(() => (window as any).__reportReady));
     if (reportError) throw new Error(`리포트 페이지 오류: ${reportError}`);
 
     await updateQueueStatus(queueId, { progress: 75 });
