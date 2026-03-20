@@ -239,9 +239,9 @@ export default function ReportsPage() {
                           {(displayStatus === 'processing') ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
                               <div style={{ width: 60, height: 6, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: isRetrying ? '30%' : `${item.progress}%`, background: '#3B82F6', borderRadius: 3, transition: 'width 0.5s' }} />
+                                <div style={{ height: '100%', width: `${item.progress || (isRetrying ? 10 : 0)}%`, background: '#3B82F6', borderRadius: 3, transition: 'width 0.5s' }} />
                               </div>
-                              <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600 }}>{isRetrying ? '…' : `${item.progress}%`}</span>
+                              <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600 }}>{item.progress ? `${item.progress}%` : '…'}</span>
                             </div>
                           ) : item.status === 'completed' ? (
                             <span style={{ color: '#22C55E', fontWeight: 700 }}>100%</span>

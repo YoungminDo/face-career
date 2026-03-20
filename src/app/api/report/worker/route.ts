@@ -115,14 +115,14 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = Buffer.from(pdfData);
 
     const { error: uploadError } = await supabase.storage
-      .from('report-files')
+      .from('report_files')
       .upload(storagePath, pdfBuffer, { contentType: 'application/pdf', upsert: true });
 
     if (uploadError) throw new Error('Storage 업로드 실패: ' + uploadError.message);
 
     // Signed URL (30일 유효)
     const { data: signedData, error: signErr } = await supabase.storage
-      .from('report-files')
+      .from('report_files')
       .createSignedUrl(storagePath, 60 * 60 * 24 * 30);
 
     if (signErr || !signedData?.signedUrl) throw new Error('URL 생성 실패');
