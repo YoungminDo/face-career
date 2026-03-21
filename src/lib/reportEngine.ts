@@ -1,4 +1,5 @@
 import { FOCUS_TYPES, ANCHOR_DEFS, COMP_NAMES, JOB_COMPETENCY_MAPPING } from '@/data/mappings';
+import { emojiToImg } from '@/lib/emojiMap';
 import {
   calcFitScores, determineFitType, applyRefine,
   calcAnchorScores, getTopAnchors,
@@ -316,7 +317,7 @@ export function replaceTemplate(html: string, r: any): string {
 
   // ─── Focus: 세부유형 카드 → 동적 생성 ───
   const subtypeCard = `<div class="rounded-lg" style="background:${pt?.color}10; border:2px solid ${pt?.color}40; padding:16px 20px; display:flex; gap:16px; align-items:center;">
-    <div style="flex-shrink:0; width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, ${pt?.color}, ${pt?.color}dd); display:flex; align-items:center; justify-content:center; font-size:40pt;">${pt?.emoji || '✨'}</div>
+    <div style="flex-shrink:0; width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, ${pt?.color}, ${pt?.color}dd); display:flex; align-items:center; justify-content:center; font-size:28pt; font-weight:900; color:white;">${pt?.korean?.charAt(0) || 'F'}</div>
     <div style="flex:1;">
       <div style="font-size:20pt; font-weight:900; color:${pt?.color};">${subtypeInterp?.title || `${st?.korean}의 감각을 가진 ${pt?.korean}`}</div>
       <div class="t-small mb-sm" style="color:${pt?.color};">${focus.subTypeCode || `${focus.primary}${focus.secondary}`} — ${CODE_TO_EN[focus.primary] || focusTypeName} × ${CODE_TO_EN[focus.secondary] || focusSecondaryName}</div>
@@ -589,7 +590,7 @@ export function replaceTemplate(html: string, r: any): string {
   // Build main anchor card
   const mainAnchorCard = `<div class="rounded-lg p-lg" style="background:linear-gradient(160deg, #FFFBEB, #FEF3C7); border:2px solid #FDE68A;">
       <div class="text-center">
-        <div style="font-size:28pt;">${anchorAll[0].def?.emoji}</div>
+        <div style="width:52px;height:52px;border-radius:50%;background:#B45309;display:inline-flex;align-items:center;justify-content:center;font-size:18pt;font-weight:900;color:white;margin-bottom:4px;">${anchorAll[0].def?.korean?.charAt(0) || 'A'}</div>
         <div class="t-label mt-xs" style="color:#B45309;">메인 가치</div>
         <div style="font-size:26pt; font-weight:900; color:#92400E; margin:4px 0;">${anchorAll[0].def?.korean}</div>
         <div class="t-small" style="color:#B45309;">${anchorAll[0].score}점</div>
@@ -605,7 +606,7 @@ export function replaceTemplate(html: string, r: any): string {
   // Build sub anchor card
   const subAnchorCard = `<div class="rounded-lg p-lg" style="background:linear-gradient(160deg, #EFF6FF, #DBEAFE); border:2px solid #BFDBFE;">
       <div class="text-center">
-        <div style="font-size:28pt;">${anchorAll[1].def?.emoji}</div>
+        <div style="width:52px;height:52px;border-radius:50%;background:#1D4ED8;display:inline-flex;align-items:center;justify-content:center;font-size:18pt;font-weight:900;color:white;margin-bottom:4px;">${anchorAll[1].def?.korean?.charAt(0) || 'A'}</div>
         <div class="t-label mt-xs" style="color:#1D4ED8;">서브 가치</div>
         <div style="font-size:26pt; font-weight:900; color:#1E40AF; margin:4px 0;">${anchorAll[1].def?.korean}</div>
         <div class="t-small" style="color:#1D4ED8;">${anchorAll[1].score}점</div>
@@ -662,7 +663,7 @@ export function replaceTemplate(html: string, r: any): string {
     const descColor = isTop2 ? cc.textLight : '#94A3B8';
     anchorCardsHtml += `<div class="rounded p-md" style="${bgStyle}">
       <div class="flex justify-between items-center mb-xs">
-        <span style="font-weight:800; color:${nameColor};">${a.def?.emoji} ${a.def?.korean}</span>
+        <span style="font-weight:800; color:${nameColor};">${a.def?.korean}</span>
         <span style="font-weight:900; font-size:14pt; color:${scoreColor};">${a.score}</span>
       </div>
       <div style="font-size:9pt; color:${descColor}; line-height:1.6;">${anchorDescriptions[a.key] || ''}</div>
@@ -2028,48 +2029,30 @@ export function replaceTemplate(html: string, r: any): string {
   // ─── 관심영역 (lines 983-996) — keep static for now, no interest data saved ───
   // (Interest area data is collected but not stored in localStorage yet)
 
-  // PDF용 emoji → CSS 변환 (Puppeteer에 color emoji 폰트 없음)
-  h = sanitizeEmojiForPdf(h);
+  // PDF용 emoji → Twemoji <img> 태그로 변환
+  h = replaceEmojiWithImages(h);
 
   return h;
 }
 
-function sanitizeEmojiForPdf(html: string): string {
+function replaceEmojiWithImages(html: string): string {
+  // 나다움 레벨 컬러 dot — CSS만으로 처리 (폰트 무관)
   const dot = (color: string) =>
     `<span style="display:inline-block;width:.7em;height:.7em;border-radius:50%;background:${color};vertical-align:middle;margin-right:2px;"></span>`;
 
-  return html
-    // 나다움 레벨
+  // 1. 컬러 dot 이모지 먼저 CSS로 처리 (이미지 불필요)
+  html = html
     .replace(/🟢/gu, dot('#22C55E'))
     .replace(/🟡/gu, dot('#EAB308'))
     .replace(/🔴/gu, dot('#EF4444'))
-    .replace(/🔵/gu, dot('#3B82F6'))
-    // 가치관 (Anchor)
-    .replace(/🔬/gu, '◎')
-    .replace(/🚀/gu, '▲')
-    .replace(/🦅/gu, '◈')
-    .replace(/🏠/gu, '⌂')
-    .replace(/🌱/gu, '◉')
-    .replace(/⚖️?/gu, '⊜')
-    // Focus 타입
-    .replace(/🤝/gu, '◎')
-    .replace(/💡/gu, '✦')
-    .replace(/🛡️?/gu, '◈')
-    .replace(/✨/gu, '✦')
-    // 섹션 헤더 아이콘 (Misc Symbols — 1F300 범위 밖)
-    .replace(/☀️?/gu, '✦')
-    .replace(/⚡️?/gu, '↯')
-    .replace(/🔋/gu, '▣')
-    .replace(/✅/gu, '✓')
-    .replace(/⚠️?/gu, '△')
-    .replace(/🌐/gu, '○')
-    .replace(/🔀/gu, '⇄')
-    .replace(/📊/gu, '▦')
-    .replace(/🎯/gu, '◎')
-    // Misc Symbols (U+2600-27BF) 나머지 fallback
-    .replace(/[☀-➿]️?/gu, '•')
-    // Main emoji block fallback
-    .replace(/[🌀-🫿]/gu, '•');
+    .replace(/🔵/gu, dot('#3B82F6'));
+
+  // 2. 나머지 이모지 → Twemoji <img> 태그로 변환
+  // 이모지 유니코드 범위 전체 매칭 (variation selector FE0F 포함)
+  return html.replace(
+    /[\u{1F300}-\u{1FAFF}][\u{FE00}-\u{FE0F}]?|[\u2600-\u27BF][\uFE0F]?/gu,
+    (match) => emojiToImg(match, '1.1em')
+  );
 }
 
 
