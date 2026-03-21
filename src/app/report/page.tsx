@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FOCUS_TYPES, ANCHOR_DEFS, COMP_NAMES } from '@/data/mappings';
 import {
@@ -2046,6 +2046,19 @@ function ReportContent() {
   const [pdfState, setPdfState] = useState<'idle' | 'generating' | 'done' | 'error'>('idle');
   const [pdfProgress, setPdfProgress] = useState(0);
   const diagDataRef = { current: null as any };
+  const [iframeScale, setIframeScale] = useState(1);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const IFRAME_W = 794;
+    const update = () => {
+      const w = wrapperRef.current?.clientWidth ?? window.innerWidth;
+      setIframeScale(Math.min(1, w / IFRAME_W));
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -2231,13 +2244,20 @@ function ReportContent() {
           {pdfState === 'generating' ? `생성 중 ${pdfProgress}%` : pdfState === 'done' ? '✓ 다운로드' : pdfState === 'error' ? '실패 재시도' : 'PDF 저장'}
         </button>
       </div>
-      <div className="pt-14">
-        <iframe
-          srcDoc={html}
-          className="w-full border-0"
-          style={{ minHeight: '100vh', height: '30000px' }}
-          title="FACE Premium Report"
-        />
+      <div ref={wrapperRef} className="pt-14 overflow-hidden">
+        <div style={{ height: `${30000 * iframeScale}px` }}>
+          <iframe
+            srcDoc={html}
+            className="border-0"
+            style={{
+              width: '794px',
+              height: '30000px',
+              transformOrigin: 'top left',
+              transform: `scale(${iframeScale})`,
+            }}
+            title="FACE Premium Report"
+          />
+        </div>
       </div>
     </div>
   );
