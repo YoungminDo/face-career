@@ -48,11 +48,29 @@ export async function POST(req: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path');
+
     const templateHtml = fs.readFileSync(
-      require('path').join(process.cwd(), 'public/report-template.html'),
+      path.join(process.cwd(), 'public/report-template.html'),
       'utf-8'
     );
-    const finalHtml = replaceTemplate(templateHtml, r);
+
+    // 폰트를 CDN 없이 base64로 임베드 → 환경 무관하게 항상 동일 렌더링
+    const fontPath = path.join(process.cwd(), 'public/fonts/PretendardVariable.woff2');
+    const fontBase64 = fs.readFileSync(fontPath).toString('base64');
+    const fontFaceStyle = `<style>
+@font-face {
+  font-family: 'Pretendard';
+  src: url('data:font/woff2;base64,${fontBase64}') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+</style>`;
+
+    const finalHtml = replaceTemplate(templateHtml, r)
+      .replace('</head>', fontFaceStyle + '</head>');
 
     await updateQueueStatus(queueId, { progress: 40 });
 
