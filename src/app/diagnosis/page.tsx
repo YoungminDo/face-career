@@ -454,18 +454,29 @@ export default function DiagnosisPage() {
 
             <div>
               <label className="text-sm font-bold text-gray-700 mb-2 block">
-                {currentStatus === 'worker' ? '현재 직무를 선택해주세요' : '희망하는 직무가 있으신가요?'}
+                {currentStatus === 'worker' ? '어떤 직무를 분석할까요?' : '희망하는 직무가 있으신가요?'}
               </label>
               {currentStatus === 'worker' ? (
-                <p className="text-xs text-gray-400 mb-3">없으면 현재 직무와 가장 가까운 직무를 선택해주세요</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => { setHasDesiredJob(false); setDesiredJob(''); }}
+                    className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === false ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
+                    <div className="text-sm font-bold">현재 직무</div>
+                    <div className="text-xs text-gray-400 mt-1">지금 하고 있는 일</div>
+                  </button>
+                  <button onClick={() => { setHasDesiredJob(true); setDesiredJob(''); }}
+                    className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === true ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
+                    <div className="text-sm font-bold">전직 희망 직무</div>
+                    <div className="text-xs text-gray-400 mt-1">이직하고 싶은 분야</div>
+                  </button>
+                </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 mb-0">
+                <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => { setHasDesiredJob(false); setDesiredJob(''); }}
                     className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === false ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
                     <div className="text-sm font-bold">아직 없어요</div>
                     <div className="text-xs text-gray-400 mt-1">천천히 찾아볼게요</div>
                   </button>
-                  <button onClick={() => setHasDesiredJob(true)}
+                  <button onClick={() => { setHasDesiredJob(true); setDesiredJob(''); }}
                     className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === true ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
                     <div className="text-sm font-bold">있어요</div>
                     <div className="text-xs text-gray-400 mt-1">희망 직무가 있어요</div>
@@ -474,11 +485,14 @@ export default function DiagnosisPage() {
               )}
             </div>
 
-            {(currentStatus === 'worker' || hasDesiredJob === true) && (
+            {(currentStatus === 'worker' ? hasDesiredJob !== null : hasDesiredJob === true) && (
               <div className="space-y-3">
                 <label className="text-sm font-bold text-gray-700 block">
-                  {currentStatus === 'worker' ? '직무 선택' : '잘 맞는지 분석 원하는 직무'}
+                  {currentStatus === 'worker'
+                    ? (hasDesiredJob ? '전직 희망 직무 선택' : '현재 직무 선택')
+                    : '잘 맞는지 분석 원하는 직무'}
                 </label>
+                <p className="text-xs text-gray-400 -mt-1">혹시 없으면, 가장 비슷한 직무를 고르세요</p>
                 <div>
                   <div className="text-xs text-gray-400 mb-1">대분류</div>
                   <select
