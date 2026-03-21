@@ -13,13 +13,13 @@ const ENERGY_COLORS: Record<string, { bg: string; color: string }> = {
   red:    { bg: '#FEE2E2', color: '#991B1B' },
 };
 
-function StatCard({ label, value, icon, color }: { label: string; value: number | string; icon: string; color: string }) {
+function StatCard({ label, value, icon, color, mobile }: { label: string; value: number | string; icon: string; color: string; mobile?: boolean }) {
   return (
-    <div style={{ background: 'white', borderRadius: 16, padding: '20px 24px', border: '1px solid #E2E8F0', flex: 1, minWidth: 180 }}>
+    <div style={{ background: 'white', borderRadius: 16, padding: mobile ? '16px 20px' : '20px 24px', border: '1px solid #E2E8F0', flex: 1, minWidth: mobile ? 0 : 180 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>{label}</div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: '#1E293B', marginTop: 4 }}>{value}</div>
+          <div style={{ fontSize: mobile ? 26 : 32, fontWeight: 900, color: '#1E293B', marginTop: 4 }}>{value}</div>
         </div>
         <div style={{ width: 44, height: 44, borderRadius: 12, background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
           {icon}
@@ -34,6 +34,14 @@ export default function AdminDashboard() {
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
   const [recentDiagnoses, setRecentDiagnoses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     fetch('/api/admin/stats')
@@ -48,23 +56,25 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 12, color: '#94A3B8' }}>Admin</span>
-      </div>
-      <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 4 }}>대시보드</h1>
-      <p style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>FACE 서비스 현황을 한눈에 확인하세요.</p>
+      {!isMobile && (
+        <div style={{ marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: '#94A3B8' }}>Admin</span>
+        </div>
+      )}
+      <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 900, marginBottom: 4 }}>대시보드</h1>
+      <p style={{ fontSize: 13, color: '#64748B', marginBottom: isMobile ? 16 : 24 }}>FACE 서비스 현황을 한눈에 확인하세요.</p>
 
       {/* 통계 카드 */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>
-        <StatCard label="전체 사용자" value={loading ? '…' : stats.totalUsers} icon="👥" color="#3B82F6" />
-        <StatCard label="전체 진단" value={loading ? '…' : stats.totalDiagnoses} icon="📋" color="#F97316" />
-        <StatCard label="완료된 진단" value={loading ? '…' : stats.completedDiagnoses} icon="✅" color="#22C55E" />
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: isMobile ? 10 : 16, marginBottom: isMobile ? 20 : 32 }}>
+        <StatCard label="전체 사용자" value={loading ? '…' : stats.totalUsers} icon="👥" color="#3B82F6" mobile={isMobile} />
+        <StatCard label="전체 진단" value={loading ? '…' : stats.totalDiagnoses} icon="📋" color="#F97316" mobile={isMobile} />
+        <StatCard label="완료된 진단" value={loading ? '…' : stats.completedDiagnoses} icon="✅" color="#22C55E" mobile={isMobile} />
       </div>
 
       {/* 최근 가입 + 최근 진단 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 24 }}>
         {/* 최근 가입 사용자 */}
-        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', padding: 24 }}>
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', padding: isMobile ? 16 : 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>최근 가입 사용자</h3>
             <a href="/admin/users" style={{ fontSize: 12, color: '#3B82F6', textDecoration: 'none' }}>전체 보기</a>
@@ -90,7 +100,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* 최근 진단 */}
-        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', padding: 24 }}>
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', padding: isMobile ? 16 : 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>최근 진단</h3>
             <a href="/admin/diagnoses" style={{ fontSize: 12, color: '#3B82F6', textDecoration: 'none' }}>전체 보기</a>

@@ -55,6 +55,14 @@ export default function ReportsPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState('');
   const [retrying, setRetrying] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const loadData = useCallback(async () => {
     const supabase = createClient(
@@ -138,41 +146,39 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0, marginBottom: 4 }}>
         <div>
-          <div style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: 12, color: '#94A3B8' }}>Admin / 리포트 관리</span>
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 4, color: '#1E293B' }}>리포트 관리</h1>
-          <p style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>
-            PDF 생성 큐 현황. 처리 중인 항목이 있으면 5초마다 자동 갱신됩니다.
-            {lastUpdated && <span style={{ marginLeft: 8, color: '#CBD5E1' }}>최근 갱신: {lastUpdated}</span>}
+          {!isMobile && <div style={{ marginBottom: 8 }}><span style={{ fontSize: 12, color: '#94A3B8' }}>Admin / 리포트 관리</span></div>}
+          <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 900, marginBottom: 4, color: '#1E293B' }}>리포트 관리</h1>
+          <p style={{ fontSize: 13, color: '#64748B', marginBottom: isMobile ? 0 : 24 }}>
+            PDF 생성 큐 현황.
+            {lastUpdated && <span style={{ marginLeft: 6, color: '#CBD5E1' }}>갱신: {lastUpdated}</span>}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <a href="/admin/diagnoses" style={{ padding: '8px 16px', borderRadius: 8, background: '#F1F5F9', color: '#475569', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-            ← 진단 관리
+          <a href="/admin/diagnoses" style={{ padding: '8px 14px', borderRadius: 8, background: '#F1F5F9', color: '#475569', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+            ← 진단
           </a>
-          <button onClick={loadData} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #E2E8F0', background: 'white', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            🔄 새로고침
+          <button onClick={loadData} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #E2E8F0', background: 'white', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            새로고침
           </button>
         </div>
       </div>
 
       {/* 통계 카드 */}
       {stats && (
-        <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)', gap: isMobile ? 8 : 16, marginBottom: isMobile ? 20 : 28, marginTop: isMobile ? 16 : 0 }}>
           {[
             { label: '총 요청', value: stats.total, color: '#1E293B' },
             { label: '완료', value: stats.completed, color: '#22C55E' },
             { label: '실패', value: stats.failed, color: '#EF4444' },
-            { label: '대기 중', value: stats.waiting, color: '#F59E0B' },
+            { label: '대기', value: stats.waiting, color: '#F59E0B' },
             { label: '처리 중', value: stats.processing, color: '#3B82F6' },
-            { label: '평균 처리시간', value: stats.avgSeconds !== null ? `${stats.avgSeconds}초` : '—', color: '#8B5CF6' },
+            { label: '평균', value: stats.avgSeconds !== null ? `${stats.avgSeconds}s` : '—', color: '#8B5CF6' },
           ].map(s => (
-            <div key={s.label} style={{ background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid #E2E8F0', flex: 1, minWidth: 110 }}>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: s.color }}>{s.value}</div>
+            <div key={s.label} style={{ background: 'white', borderRadius: 12, padding: isMobile ? '12px 10px' : '16px 20px', border: '1px solid #E2E8F0' }}>
+              <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 900, color: s.color }}>{s.value}</div>
             </div>
           ))}
         </div>
@@ -188,120 +194,172 @@ export default function ReportsPage() {
         <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>
           불러오는 중…
         </div>
+      ) : items.length === 0 ? (
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>
+          생성된 리포트가 없습니다.<br />
+          <a href="/admin/diagnoses" style={{ color: '#8B5CF6', fontWeight: 700, textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>
+            진단 관리에서 PDF 생성 →
+          </a>
+        </div>
+      ) : isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {items.map(item => {
+            const isRetrying = retrying.has(item.id);
+            const displayStatus = isRetrying ? 'processing' : item.status;
+            const cfg = STATUS_CONFIG[displayStatus] || { label: displayStatus, color: '#64748B', bg: '#F1F5F9' };
+            return (
+              <div key={item.id} style={{ background: 'white', borderRadius: 14, border: '1px solid #E2E8F0', padding: '14px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#64748B' }}>{item.id.substring(0, 12)}…</span>
+                  <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>
+                    {cfg.label}
+                  </span>
+                </div>
+                {displayStatus === 'processing' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <div style={{ flex: 1, height: 6, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${item.progress || (isRetrying ? 10 : 0)}%`, background: '#3B82F6', borderRadius: 3 }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600, whiteSpace: 'nowrap' }}>{item.progress ? `${item.progress}%` : '…'}</span>
+                  </div>
+                )}
+                {item.status === 'failed' && item.error_message && (
+                  <div style={{ fontSize: 11, color: '#EF4444', marginBottom: 8, lineHeight: 1.4 }}>{item.error_message}</div>
+                )}
+                <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 10 }}>
+                  {formatDate(item.started_at || item.created_at)}
+                  {item.completed_at && <span style={{ marginLeft: 8 }}>→ {formatDate(item.completed_at)}</span>}
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {item.diagnosis_data && (
+                    <button onClick={() => handleWebView(item)} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #8B5CF6', fontSize: 12, fontWeight: 600, background: 'white', color: '#8B5CF6', cursor: 'pointer' }}>
+                      웹 보기
+                    </button>
+                  )}
+                  {item.report_url ? (
+                    <>
+                      <a href={item.report_url} target="_blank" rel="noopener noreferrer" style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #22C55E', fontSize: 12, fontWeight: 600, background: 'white', color: '#22C55E', textDecoration: 'none' }}>
+                        PDF 다운로드
+                      </a>
+                      <button onClick={() => handleRetry(item.id, true)} disabled={retrying.has(item.id)} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, background: 'white', color: '#94A3B8', cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer' }}>
+                        {retrying.has(item.id) ? '…' : '재생성'}
+                      </button>
+                    </>
+                  ) : (item.status === 'waiting' || item.status === 'failed') && (
+                    <button onClick={() => handleRetry(item.id)} disabled={retrying.has(item.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600, cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer', background: item.status === 'failed' ? '#FEE2E2' : '#DBEAFE', color: item.status === 'failed' ? '#991B1B' : '#1D4ED8' }}>
+                      {retrying.has(item.id) ? '실행 중…' : item.status === 'failed' ? '재시도' : '실행'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-          {items.length === 0 ? (
-            <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>
-              생성된 리포트가 없습니다.<br />
-              <a href="/admin/diagnoses" style={{ color: '#8B5CF6', fontWeight: 700, textDecoration: 'none', marginTop: 8, display: 'inline-block' }}>
-                진단 관리에서 PDF 생성 →
-              </a>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                    <th style={th}>Queue ID</th>
-                    <th style={th}>User ID</th>
-                    <th style={th}>상태</th>
-                    <th style={{ ...th, textAlign: 'center' }}>진행도</th>
-                    <th style={th}>요청일시</th>
-                    <th style={th}>완료일시</th>
-                    <th style={{ ...th, textAlign: 'center' }}>웹 보기</th>
-                    <th style={{ ...th, textAlign: 'center' }}>PDF</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map(item => {
-                    const isRetrying = retrying.has(item.id);
-                    const displayStatus = isRetrying ? 'processing' : item.status;
-                    const cfg = STATUS_CONFIG[displayStatus] || { label: displayStatus, color: '#64748B', bg: '#F1F5F9' };
-                    return (
-                      <tr key={item.id}>
-                        <td style={{ ...td, fontFamily: 'monospace', color: '#64748B', fontSize: 11 }}>
-                          {item.id.substring(0, 8)}…
-                        </td>
-                        <td style={{ ...td, color: '#94A3B8', fontSize: 11, fontFamily: 'monospace' }}>
-                          {item.user_id ? item.user_id.substring(0, 8) + '…' : '—'}
-                        </td>
-                        <td style={td}>
-                          <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>
-                            {cfg.label}
-                          </span>
-                          {!isRetrying && item.status === 'failed' && item.error_message && (
-                            <div style={{ fontSize: 10, color: '#EF4444', marginTop: 4, maxWidth: 200, wordBreak: 'break-all', lineHeight: 1.4 }}>
-                              {item.error_message}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                  <th style={th}>Queue ID</th>
+                  <th style={th}>User ID</th>
+                  <th style={th}>상태</th>
+                  <th style={{ ...th, textAlign: 'center' }}>진행도</th>
+                  <th style={th}>요청일시</th>
+                  <th style={th}>완료일시</th>
+                  <th style={{ ...th, textAlign: 'center' }}>웹 보기</th>
+                  <th style={{ ...th, textAlign: 'center' }}>PDF</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(item => {
+                  const isRetrying = retrying.has(item.id);
+                  const displayStatus = isRetrying ? 'processing' : item.status;
+                  const cfg = STATUS_CONFIG[displayStatus] || { label: displayStatus, color: '#64748B', bg: '#F1F5F9' };
+                  return (
+                    <tr key={item.id}>
+                      <td style={{ ...td, fontFamily: 'monospace', color: '#64748B', fontSize: 11 }}>
+                        {item.id.substring(0, 8)}…
+                      </td>
+                      <td style={{ ...td, color: '#94A3B8', fontSize: 11, fontFamily: 'monospace' }}>
+                        {item.user_id ? item.user_id.substring(0, 8) + '…' : '—'}
+                      </td>
+                      <td style={td}>
+                        <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: cfg.bg, color: cfg.color }}>
+                          {cfg.label}
+                        </span>
+                        {!isRetrying && item.status === 'failed' && item.error_message && (
+                          <div style={{ fontSize: 10, color: '#EF4444', marginTop: 4, maxWidth: 200, wordBreak: 'break-all', lineHeight: 1.4 }}>
+                            {item.error_message}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ ...td, textAlign: 'center' }}>
+                        {(displayStatus === 'processing') ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                            <div style={{ width: 60, height: 6, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${item.progress || (isRetrying ? 10 : 0)}%`, background: '#3B82F6', borderRadius: 3, transition: 'width 0.5s' }} />
                             </div>
-                          )}
-                        </td>
-                        <td style={{ ...td, textAlign: 'center' }}>
-                          {(displayStatus === 'processing') ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
-                              <div style={{ width: 60, height: 6, background: '#E2E8F0', borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${item.progress || (isRetrying ? 10 : 0)}%`, background: '#3B82F6', borderRadius: 3, transition: 'width 0.5s' }} />
-                              </div>
-                              <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600 }}>{item.progress ? `${item.progress}%` : '…'}</span>
-                            </div>
-                          ) : item.status === 'completed' ? (
-                            <span style={{ color: '#22C55E', fontWeight: 700 }}>100%</span>
-                          ) : (
-                            <span style={{ color: '#CBD5E1' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>
-                          {formatDate(item.started_at || item.created_at)}
-                          {item.started_at && item.started_at !== item.created_at && (
-                            <div style={{ fontSize: 10, color: '#CBD5E1' }}>최초: {formatDate(item.created_at)}</div>
-                          )}
-                        </td>
-                        <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>{formatDate(item.completed_at)}</td>
-                        <td style={{ ...td, textAlign: 'center' }}>
-                          {item.diagnosis_data ? (
+                            <span style={{ fontSize: 11, color: '#3B82F6', fontWeight: 600 }}>{item.progress ? `${item.progress}%` : '…'}</span>
+                          </div>
+                        ) : item.status === 'completed' ? (
+                          <span style={{ color: '#22C55E', fontWeight: 700 }}>100%</span>
+                        ) : (
+                          <span style={{ color: '#CBD5E1' }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>
+                        {formatDate(item.started_at || item.created_at)}
+                        {item.started_at && item.started_at !== item.created_at && (
+                          <div style={{ fontSize: 10, color: '#CBD5E1' }}>최초: {formatDate(item.created_at)}</div>
+                        )}
+                      </td>
+                      <td style={{ ...td, color: '#64748B', whiteSpace: 'nowrap' }}>{formatDate(item.completed_at)}</td>
+                      <td style={{ ...td, textAlign: 'center' }}>
+                        {item.diagnosis_data ? (
+                          <button
+                            onClick={() => handleWebView(item)}
+                            style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #8B5CF6', fontSize: 11, fontWeight: 600, background: 'white', color: '#8B5CF6', cursor: 'pointer' }}
+                          >
+                            웹 보기
+                          </button>
+                        ) : (
+                          <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ ...td, textAlign: 'center' }}>
+                        {item.report_url ? (
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
+                            <a href={item.report_url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #22C55E', fontSize: 11, fontWeight: 600, background: 'white', color: '#22C55E', textDecoration: 'none', display: 'inline-block' }}>
+                              다운로드
+                            </a>
                             <button
-                              onClick={() => handleWebView(item)}
-                              style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #8B5CF6', fontSize: 11, fontWeight: 600, background: 'white', color: '#8B5CF6', cursor: 'pointer' }}
-                            >
-                              웹 보기
-                            </button>
-                          ) : (
-                            <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ ...td, textAlign: 'center' }}>
-                          {item.report_url ? (
-                            <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
-                              <a href={item.report_url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #22C55E', fontSize: 11, fontWeight: 600, background: 'white', color: '#22C55E', textDecoration: 'none', display: 'inline-block' }}>
-                                다운로드
-                              </a>
-                              <button
-                                onClick={() => handleRetry(item.id, true)}
-                                disabled={retrying.has(item.id)}
-                                title="재생성"
-                                style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 11, background: 'white', color: '#94A3B8', cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer' }}
-                              >
-                                {retrying.has(item.id) ? '…' : '↺'}
-                              </button>
-                            </div>
-                          ) : (item.status === 'waiting' || item.status === 'failed') ? (
-                            <button
-                              onClick={() => handleRetry(item.id)}
+                              onClick={() => handleRetry(item.id, true)}
                               disabled={retrying.has(item.id)}
-                              style={{ padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer', background: item.status === 'failed' ? '#FEE2E2' : '#DBEAFE', color: item.status === 'failed' ? '#991B1B' : '#1D4ED8' }}
+                              title="재생성"
+                              style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 11, background: 'white', color: '#94A3B8', cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer' }}
                             >
-                              {retrying.has(item.id) ? '실행 중…' : item.status === 'failed' ? '재시도' : '▶ 실행'}
+                              {retrying.has(item.id) ? '…' : '↺'}
                             </button>
-                          ) : (
-                            <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                          </div>
+                        ) : (item.status === 'waiting' || item.status === 'failed') ? (
+                          <button
+                            onClick={() => handleRetry(item.id)}
+                            disabled={retrying.has(item.id)}
+                            style={{ padding: '4px 12px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: retrying.has(item.id) ? 'not-allowed' : 'pointer', background: item.status === 'failed' ? '#FEE2E2' : '#DBEAFE', color: item.status === 'failed' ? '#991B1B' : '#1D4ED8' }}
+                          >
+                            {retrying.has(item.id) ? '실행 중…' : item.status === 'failed' ? '재시도' : '▶ 실행'}
+                          </button>
+                        ) : (
+                          <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

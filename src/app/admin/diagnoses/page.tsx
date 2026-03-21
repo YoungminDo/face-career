@@ -46,6 +46,14 @@ export default function DiagnosesPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<Record<string, 'loading' | 'done' | 'error'>>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const addToast = (type: Toast['type'], message: string) => {
     const id = ++toastId;
@@ -119,25 +127,25 @@ export default function DiagnosesPage() {
         })}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0, marginBottom: 4 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 4 }}>진단 관리</h1>
-          <p style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>전체 진단 현황과 결과를 조회합니다.</p>
+          <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 900, marginBottom: 4 }}>진단 관리</h1>
+          <p style={{ fontSize: 13, color: '#64748B', marginBottom: isMobile ? 0 : 24 }}>전체 진단 현황과 결과를 조회합니다.</p>
         </div>
-        <a href="/admin/reports" style={{ padding: '8px 16px', borderRadius: 8, background: '#8B5CF6', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
-          📄 리포트 관리
+        <a href="/admin/reports" style={{ padding: '8px 16px', borderRadius: 8, background: '#8B5CF6', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-block', marginBottom: isMobile ? 4 : 0 }}>
+          PDF 리포트 관리
         </a>
       </div>
 
       {/* 필터 탭 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, marginTop: isMobile ? 12 : 0 }}>
         {([
           { key: 'all', label: '전체' },
           { key: 'completed', label: '완료' },
           { key: 'in_progress', label: '진행 중' },
         ] as const).map(tab => (
           <button key={tab.key} onClick={() => setFilter(tab.key)} style={{
-            padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
             fontSize: 13, fontWeight: filter === tab.key ? 700 : 400,
             background: filter === tab.key ? '#22C55E' : 'white',
             color: filter === tab.key ? 'white' : '#64748B',
@@ -147,87 +155,143 @@ export default function DiagnosesPage() {
         ))}
       </div>
 
-      {/* 테이블 */}
-      <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>불러오는 중…</div>
-        ) : diagnoses.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>진단 기록이 없습니다.</div>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>ID</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>사용자</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>Focus 유형</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>Energy</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>Core Fit</th>
-                <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#64748B' }}>상태</th>
-                <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#64748B' }}>PDF</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>날짜</th>
-              </tr>
-            </thead>
-            <tbody>
-              {diagnoses.map(d => {
-                const ec = ENERGY_COLORS[d.energyLevel] || { bg: '#F1F5F9', color: '#94A3B8' };
-                const pdfState = generating[d.fullId];
-                return (
-                  <tr key={d.fullId} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '12px 16px', color: '#94A3B8', fontSize: 11, fontFamily: 'monospace' }}>{d.id}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: 600 }}>{d.name}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      {d.focusType ? (
-                        <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: d.focusColor + '20', color: d.focusColor }}>
-                          {d.focusType} / {d.subTypeCode}
+      {/* 모바일: 카드 / 데스크탑: 테이블 */}
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {loading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>불러오는 중…</div>
+          ) : diagnoses.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>진단 기록이 없습니다.</div>
+          ) : diagnoses.map(d => {
+            const ec = ENERGY_COLORS[d.energyLevel] || { bg: '#F1F5F9', color: '#94A3B8' };
+            const pdfState = generating[d.fullId];
+            return (
+              <div key={d.fullId} style={{ background: 'white', borderRadius: 14, border: '1px solid #E2E8F0', padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{d.name}</span>
+                  <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: d.status === 'completed' ? '#DCFCE7' : '#FEF9C3', color: d.status === 'completed' ? '#166534' : '#854D0E' }}>
+                    {d.status === 'completed' ? '완료' : '진행 중'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                  {d.focusType && (
+                    <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: d.focusColor + '20', color: d.focusColor }}>
+                      {d.focusType} / {d.subTypeCode}
+                    </span>
+                  )}
+                  {d.energyStage && (
+                    <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: ec.bg, color: ec.color }}>
+                      {d.energyStage}
+                    </span>
+                  )}
+                  {d.coreJob && (
+                    <span style={{ fontSize: 11, color: '#64748B' }}>{d.coreJob} ({d.coreJobPct}%)</span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: '#94A3B8' }}>{d.date}</span>
+                  {d.status === 'completed' && (
+                    <button
+                      onClick={() => handleGeneratePdf(d.fullId, d.name)}
+                      disabled={!!pdfState}
+                      style={{
+                        padding: '6px 14px', borderRadius: 6, border: 'none',
+                        cursor: pdfState ? 'not-allowed' : 'pointer',
+                        fontSize: 12, fontWeight: 700,
+                        background: pdfState === 'done' ? '#DCFCE7' : pdfState === 'error' ? '#FEE2E2' : pdfState === 'loading' ? '#F1F5F9' : '#8B5CF6',
+                        color: pdfState === 'done' ? '#166634' : pdfState === 'error' ? '#991B1B' : pdfState === 'loading' ? '#94A3B8' : 'white',
+                      }}
+                    >
+                      {pdfState === 'loading' ? '요청 중…' : pdfState === 'done' ? '요청됨' : pdfState === 'error' ? '오류' : 'PDF 생성'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+          {loading ? (
+            <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>불러오는 중…</div>
+          ) : diagnoses.length === 0 ? (
+            <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>진단 기록이 없습니다.</div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>ID</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>사용자</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>Focus 유형</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>Energy</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>Core Fit</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#64748B' }}>상태</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#64748B' }}>PDF</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>날짜</th>
+                </tr>
+              </thead>
+              <tbody>
+                {diagnoses.map(d => {
+                  const ec = ENERGY_COLORS[d.energyLevel] || { bg: '#F1F5F9', color: '#94A3B8' };
+                  const pdfState = generating[d.fullId];
+                  return (
+                    <tr key={d.fullId} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      <td style={{ padding: '12px 16px', color: '#94A3B8', fontSize: 11, fontFamily: 'monospace' }}>{d.id}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600 }}>{d.name}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        {d.focusType ? (
+                          <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: d.focusColor + '20', color: d.focusColor }}>
+                            {d.focusType} / {d.subTypeCode}
+                          </span>
+                        ) : <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        {d.energyStage ? (
+                          <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: ec.bg, color: ec.color }}>
+                            {d.energyStage}
+                          </span>
+                        ) : <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 12 }}>
+                        {d.coreJob ? `${d.coreJob} (${d.coreJobPct}%)` : '—'}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <span style={{
+                          padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                          background: d.status === 'completed' ? '#DCFCE7' : '#FEF9C3',
+                          color: d.status === 'completed' ? '#166534' : '#854D0E',
+                        }}>
+                          {d.status === 'completed' ? '완료' : '진행 중'}
                         </span>
-                      ) : <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      {d.energyStage ? (
-                        <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: ec.bg, color: ec.color }}>
-                          {d.energyStage}
-                        </span>
-                      ) : <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12 }}>
-                      {d.coreJob ? `${d.coreJob} (${d.coreJobPct}%)` : '—'}
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <span style={{
-                        padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                        background: d.status === 'completed' ? '#DCFCE7' : '#FEF9C3',
-                        color: d.status === 'completed' ? '#166534' : '#854D0E',
-                      }}>
-                        {d.status === 'completed' ? '완료' : '진행 중'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      {d.status === 'completed' ? (
-                        <button
-                          onClick={() => handleGeneratePdf(d.fullId, d.name)}
-                          disabled={!!pdfState}
-                          style={{
-                            padding: '5px 12px', borderRadius: 6, border: 'none',
-                            cursor: pdfState ? 'not-allowed' : 'pointer',
-                            fontSize: 11, fontWeight: 700,
-                            background: pdfState === 'done' ? '#DCFCE7' : pdfState === 'error' ? '#FEE2E2' : pdfState === 'loading' ? '#F1F5F9' : '#8B5CF6',
-                            color: pdfState === 'done' ? '#166534' : pdfState === 'error' ? '#991B1B' : pdfState === 'loading' ? '#94A3B8' : 'white',
-                          }}
-                        >
-                          {pdfState === 'loading' ? '요청 중…' : pdfState === 'done' ? '✅ 요청됨' : pdfState === 'error' ? '❌ 오류' : '📄 PDF 생성'}
-                        </button>
-                      ) : (
-                        <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#94A3B8' }}>{d.date}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        {d.status === 'completed' ? (
+                          <button
+                            onClick={() => handleGeneratePdf(d.fullId, d.name)}
+                            disabled={!!pdfState}
+                            style={{
+                              padding: '5px 12px', borderRadius: 6, border: 'none',
+                              cursor: pdfState ? 'not-allowed' : 'pointer',
+                              fontSize: 11, fontWeight: 700,
+                              background: pdfState === 'done' ? '#DCFCE7' : pdfState === 'error' ? '#FEE2E2' : pdfState === 'loading' ? '#F1F5F9' : '#8B5CF6',
+                              color: pdfState === 'done' ? '#166534' : pdfState === 'error' ? '#991B1B' : pdfState === 'loading' ? '#94A3B8' : 'white',
+                            }}
+                          >
+                            {pdfState === 'loading' ? '요청 중…' : pdfState === 'done' ? '✅ 요청됨' : pdfState === 'error' ? '❌ 오류' : '📄 PDF 생성'}
+                          </button>
+                        ) : (
+                          <span style={{ color: '#CBD5E1', fontSize: 11 }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: '#94A3B8' }}>{d.date}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -29,6 +29,14 @@ export default function UsersPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [createSuccess, setCreateSuccess] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -70,87 +78,119 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 900 }}>사용자 관리</h1>
+      <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', marginBottom: 4, flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0 }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 900 }}>사용자 관리</h1>
         <button
           onClick={() => { setShowModal(true); setCreateError(''); setCreateSuccess(''); }}
           style={{
             padding: '10px 20px', borderRadius: 10, border: 'none',
             background: '#0F172A', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            alignSelf: isMobile ? 'flex-start' : 'auto',
           }}
         >
           + 계정 발급
         </button>
       </div>
-      <p style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>전체 사용자 목록과 상세 정보를 확인합니다.</p>
+      <p style={{ fontSize: 13, color: '#64748B', marginBottom: isMobile ? 16 : 24 }}>전체 사용자 목록과 상세 정보를 확인합니다.</p>
 
       {/* 검색 */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <input
           type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="이름 또는 이메일 검색"
-          style={{ flex: 1, padding: '10px 16px', borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none' }}
+          style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none' }}
         />
-        <div style={{ padding: '10px 16px', borderRadius: 10, background: 'white', border: '1px solid #E2E8F0', fontSize: 13, color: '#64748B' }}>
-          {loading ? '로딩...' : `전체 ${filtered.length}명`}
+        <div style={{ padding: '10px 14px', borderRadius: 10, background: 'white', border: '1px solid #E2E8F0', fontSize: 13, color: '#64748B', whiteSpace: 'nowrap' }}>
+          {loading ? '…' : `${filtered.length}명`}
         </div>
       </div>
 
-      {/* 테이블 */}
-      <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>사용자</th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>출생연도</th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>성별</th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>유형</th>
-              <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#64748B' }}>진단 수</th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>가입일</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>불러오는 중...</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>사용자가 없습니다.</td></tr>
-            ) : filtered.map(u => (
-              <tr key={u.id} style={{ borderBottom: '1px solid #F1F5F9', cursor: 'pointer' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'white')}>
-                <td style={{ padding: '12px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 16, background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
-                      {u.name[0]}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{u.name}</div>
-                      <div style={{ fontSize: 11, color: '#94A3B8' }}>{u.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td style={{ padding: '12px 16px', color: '#475569' }}>{u.birth_year || '-'}</td>
-                <td style={{ padding: '12px 16px', color: '#475569' }}>
-                  {u.gender === 'male' ? '남성' : u.gender === 'female' ? '여성' : '-'}
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  {u.focusType ? (
-                    <span style={{
-                      padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
-                      background: (TYPE_COLORS[u.focusType] || '#94A3B8') + '20',
-                      color: TYPE_COLORS[u.focusType] || '#94A3B8',
-                    }}>{u.focusType}</span>
-                  ) : <span style={{ fontSize: 11, color: '#CBD5E1' }}>미진단</span>}
-                </td>
-                <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700 }}>{u.diagCount}</td>
-                <td style={{ padding: '12px 16px', color: '#94A3B8' }}>
-                  {new Date(u.created_at).toLocaleDateString('ko-KR')}
-                </td>
+      {/* 모바일: 카드 리스트 / 데스크탑: 테이블 */}
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {loading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>불러오는 중...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>사용자가 없습니다.</div>
+          ) : filtered.map(u => (
+            <div key={u.id} style={{ background: 'white', borderRadius: 14, border: '1px solid #E2E8F0', padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 18, background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+                  {u.name[0]}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{u.name}</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</div>
+                </div>
+                {u.focusType ? (
+                  <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: (TYPE_COLORS[u.focusType] || '#94A3B8') + '20', color: TYPE_COLORS[u.focusType] || '#94A3B8', flexShrink: 0 }}>{u.focusType}</span>
+                ) : <span style={{ fontSize: 11, color: '#CBD5E1', flexShrink: 0 }}>미진단</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#64748B' }}>
+                <span>{u.birth_year || '-'}년생</span>
+                <span>{u.gender === 'male' ? '남성' : u.gender === 'female' ? '여성' : '-'}</span>
+                <span>진단 {u.diagCount}회</span>
+                <span style={{ marginLeft: 'auto', color: '#94A3B8' }}>{new Date(u.created_at).toLocaleDateString('ko-KR')}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>사용자</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>출생연도</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>성별</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>유형</th>
+                <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#64748B' }}>진단 수</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#64748B' }}>가입일</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>불러오는 중...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>사용자가 없습니다.</td></tr>
+              ) : filtered.map(u => (
+                <tr key={u.id} style={{ borderBottom: '1px solid #F1F5F9', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'white')}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 16, background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
+                        {u.name[0]}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{u.name}</div>
+                        <div style={{ fontSize: 11, color: '#94A3B8' }}>{u.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px 16px', color: '#475569' }}>{u.birth_year || '-'}</td>
+                  <td style={{ padding: '12px 16px', color: '#475569' }}>
+                    {u.gender === 'male' ? '남성' : u.gender === 'female' ? '여성' : '-'}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    {u.focusType ? (
+                      <span style={{
+                        padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                        background: (TYPE_COLORS[u.focusType] || '#94A3B8') + '20',
+                        color: TYPE_COLORS[u.focusType] || '#94A3B8',
+                      }}>{u.focusType}</span>
+                    ) : <span style={{ fontSize: 11, color: '#CBD5E1' }}>미진단</span>}
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700 }}>{u.diagCount}</td>
+                  <td style={{ padding: '12px 16px', color: '#94A3B8' }}>
+                    {new Date(u.created_at).toLocaleDateString('ko-KR')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* 계정 발급 모달 */}
       {showModal && (
