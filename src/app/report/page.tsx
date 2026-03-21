@@ -2109,7 +2109,12 @@ function ReportContent() {
           if (!res.ok) throw new Error(`template fetch failed: ${res.status}`);
           template = await res.text();
         }
-        const finalHtml = replaceTemplate(template, r);
+        const finalHtml = replaceTemplate(template, r)
+          // 웹 뷰어: A4 너비(794px)로 고정해야 모바일에서 자동 축소됨
+          .replace(
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+            '<meta name="viewport" content="width=794">'
+          );
         setHtml(finalHtml);
         setStatus('ready');
       } catch (e: any) {
