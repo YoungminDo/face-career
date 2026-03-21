@@ -15,6 +15,7 @@ interface DiagnosisRecord {
   completedAt: string;
   focusResult?: { primary: string; secondary: string; subTypeCode: string };
   desiredJob?: string;
+  _fullData?: any;
 }
 
 const supabase = createBrowserClient(
@@ -26,6 +27,7 @@ export default function MyPage() {
   const router = useRouter();
   const [history, setHistory] = useState<DiagnosisRecord[]>([]);
   const [currentData, setCurrentData] = useState<DiagnosisRecord | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -35,21 +37,101 @@ export default function MyPage() {
   };
 
   useEffect(() => {
-    const h = JSON.parse(localStorage.getItem('face_diagnosis_history') || '[]');
-    setHistory(h.reverse()); // 최신순
-    const current = localStorage.getItem('face_diagnosis');
-    if (current) setCurrentData(JSON.parse(current));
+    async function loadData() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          // 비로그인: localStorage fallback
+          const h = JSON.parse(localStorage.getItem('face_diagnosis_history') || '[]');
+          setHistory(h.reverse());
+          const current = localStorage.getItem('face_diagnosis');
+          if (current) setCurrentData(JSON.parse(current));
+          return;
+        }
+
+        // 로그인 유저: Supabase DB에서 본인 데이터만 조회 (localStorage 무시)
+        const { data: profile } = await supabase
+          .from('users')
+          .select('id, name')
+          .eq('auth_id', user.id)
+          .single();
+
+        if (!profile) {
+          // 프로필 없으면 localStorage fallback
+          const h = JSON.parse(localStorage.getItem('face_diagnosis_history') || '[]');
+          setHistory(h.reverse());
+          const current = localStorage.getItem('face_diagnosis');
+          if (current) setCurrentData(JSON.parse(current));
+          return;
+        }
+
+        const { data: diagnoses } = await supabase
+          .from('diagnoses')
+          .select('id, created_at, focus_primary, focus_secondary, focus_subtype, desired_job, answers, status')
+          .eq('user_id', profile.id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (diagnoses?.length) {
+          const records: DiagnosisRecord[] = diagnoses.map(d => ({
+            id: d.id,
+            userName: profile.name,
+            completedAt: d.created_at,
+            focusResult: {
+              primary: d.focus_primary,
+              secondary: d.focus_secondary,
+              subTypeCode: d.focus_subtype,
+            },
+            desiredJob: d.desired_job,
+            _fullData: d.answers ? {
+              ...d.answers,
+              userName: profile.name,
+              completedAt: d.created_at,
+              desiredJob: d.desired_job,
+              focusResult: {
+                primary: d.focus_primary,
+                secondary: d.focus_secondary,
+                subTypeCode: d.focus_subtype,
+              },
+            } : null,
+          }));
+
+          setHistory(records);
+          setCurrentData(records[0]);
+
+          // localStorage를 본인 최신 데이터로 갱신 (오염 덮어쓰기)
+          if (records[0]._fullData) {
+            localStorage.setItem('face_diagnosis', JSON.stringify(records[0]._fullData));
+          }
+        } else {
+          // 진단 없음: 오염된 localStorage 정리
+          localStorage.removeItem('face_diagnosis');
+          setCurrentData(null);
+        }
+      } catch (e) {
+        console.error('mypage load error:', e);
+        // fallback to localStorage
+        const h = JSON.parse(localStorage.getItem('face_diagnosis_history') || '[]');
+        setHistory(h.reverse());
+        const current = localStorage.getItem('face_diagnosis');
+        if (current) setCurrentData(JSON.parse(current));
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
   }, []);
 
   const loadDiagnosis = (record: DiagnosisRecord) => {
-    localStorage.setItem('face_diagnosis', JSON.stringify(record));
+    const data = record._fullData || record;
+    localStorage.setItem('face_diagnosis', JSON.stringify(data));
     window.location.href = '/result';
   };
 
   const deleteDiagnosis = (id: string) => {
-    const updated = history.filter(h => h.id !== id);
-    setHistory(updated);
-    localStorage.setItem('face_diagnosis_history', JSON.stringify([...updated].reverse()));
+    setHistory(prev => prev.filter(h => h.id !== id));
   };
 
   const getTypeName = (primary: string) => {
@@ -85,117 +167,123 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* 현재 프로필 */}
-        {currentData && (
-          <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
-                style={{ background: getTypeColor(currentData.focusResult?.primary || '') + '20' }}>
-                {getTypeEmoji(currentData.focusResult?.primary || '')}
-              </div>
-              <div>
-                <div className="text-lg font-bold">{currentData.userName || '회원'}</div>
-                {currentData.focusResult && (
-                  <div className="text-sm" style={{ color: getTypeColor(currentData.focusResult.primary) }}>
-                    {getTypeName(currentData.focusResult.primary)}
-                  </div>
-                )}
-              </div>
-            </div>
-            <a href="/result" className="block w-full text-center py-2.5 rounded-xl bg-[#22C55E] text-white text-sm font-bold mb-2">
-              결과 요약 보기
-            </a>
-          </div>
-        )}
-
-        {/* 리포트 뷰어 카드 */}
-        {currentData && (
-          <a href="/report" className="block bg-gradient-to-br from-[#0F172A] to-[#1E293B] rounded-2xl p-5 mb-6 text-white no-underline hover:opacity-90 transition-opacity">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📄</span>
-                <span className="font-black text-base">FACE 프리미엄 리포트</span>
-              </div>
-              <span className="text-xs bg-white/10 px-2 py-1 rounded-full">웹 뷰어</span>
-            </div>
-            <p className="text-sm text-white/60 mb-4 leading-relaxed">
-              Focus · Anchor · Capacity · Energy<br/>4가지 모듈 상세 분석 리포트를 확인하세요
-            </p>
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                {['F', 'A', 'C', 'E'].map((l, i) => (
-                  <span key={l} className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
-                    style={{ background: ['#22C55E','#F59E0B','#3B82F6','#8B5CF6'][i] }}>
-                    {l}
-                  </span>
-                ))}
-              </div>
-              <span className="text-sm font-bold text-white/80">리포트 보기 →</span>
-            </div>
-          </a>
-        )}
-
-        {/* 진단 이력 */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold">진단 이력</h2>
-          <a href="/diagnosis" className="text-sm font-bold text-[#22C55E]">
-            + 새 진단 시작
-          </a>
-        </div>
-
-        {history.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-            <div className="text-4xl mb-3">📋</div>
-            <p className="text-gray-500 mb-4">아직 진단 이력이 없어요</p>
-            <a href="/diagnosis" className="inline-block bg-[#22C55E] text-white font-bold px-6 py-3 rounded-xl">
-              진단 시작하기
-            </a>
-          </div>
+        {loading ? (
+          <div className="text-center py-16 text-gray-400">불러오는 중...</div>
         ) : (
-          <div className="space-y-3">
-            {history.map((record, i) => {
-              const date = new Date(record.completedAt);
-              const dateStr = date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-              const primary = record.focusResult?.primary || '';
-              const desiredJobName = record.desiredJob?.split('|')[1] || '';
-
-              return (
-                <div key={record.id || i} className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
-                      style={{ background: getTypeColor(primary) + '20' }}>
-                      {getTypeEmoji(primary)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{record.userName || '회원'}</span>
-                        {primary && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                            style={{ background: getTypeColor(primary) + '20', color: getTypeColor(primary) }}>
-                            {getTypeName(primary)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-0.5">
-                        {dateStr}
-                        {desiredJobName && <span className="ml-2">· 희망: {desiredJobName}</span>}
-                      </div>
-                    </div>
+          <>
+            {/* 현재 프로필 */}
+            {currentData && (
+              <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+                    style={{ background: getTypeColor(currentData.focusResult?.primary || '') + '20' }}>
+                    {getTypeEmoji(currentData.focusResult?.primary || '')}
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => loadDiagnosis(record)}
-                      className="flex-1 text-center py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">
-                      결과 보기
-                    </button>
-                    <button onClick={() => deleteDiagnosis(record.id)}
-                      className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-400 hover:bg-red-50 hover:text-red-500">
-                      삭제
-                    </button>
+                  <div>
+                    <div className="text-lg font-bold">{currentData.userName || '회원'}</div>
+                    {currentData.focusResult && (
+                      <div className="text-sm" style={{ color: getTypeColor(currentData.focusResult.primary) }}>
+                        {getTypeName(currentData.focusResult.primary)}
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                <a href="/result" className="block w-full text-center py-2.5 rounded-xl bg-[#22C55E] text-white text-sm font-bold mb-2">
+                  결과 요약 보기
+                </a>
+              </div>
+            )}
+
+            {/* 리포트 뷰어 카드 */}
+            {currentData && (
+              <a href="/report" className="block bg-gradient-to-br from-[#0F172A] to-[#1E293B] rounded-2xl p-5 mb-6 text-white no-underline hover:opacity-90 transition-opacity">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">📄</span>
+                    <span className="font-black text-base">FACE 프리미엄 리포트</span>
+                  </div>
+                  <span className="text-xs bg-white/10 px-2 py-1 rounded-full">웹 뷰어</span>
+                </div>
+                <p className="text-sm text-white/60 mb-4 leading-relaxed">
+                  Focus · Anchor · Capacity · Energy<br/>4가지 모듈 상세 분석 리포트를 확인하세요
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
+                    {['F', 'A', 'C', 'E'].map((l, i) => (
+                      <span key={l} className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
+                        style={{ background: ['#22C55E','#F59E0B','#3B82F6','#8B5CF6'][i] }}>
+                        {l}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-white/80">리포트 보기 →</span>
+                </div>
+              </a>
+            )}
+
+            {/* 진단 이력 */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">진단 이력</h2>
+              <a href="/diagnosis" className="text-sm font-bold text-[#22C55E]">
+                + 새 진단 시작
+              </a>
+            </div>
+
+            {history.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+                <div className="text-4xl mb-3">📋</div>
+                <p className="text-gray-500 mb-4">아직 진단 이력이 없어요</p>
+                <a href="/diagnosis" className="inline-block bg-[#22C55E] text-white font-bold px-6 py-3 rounded-xl">
+                  진단 시작하기
+                </a>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {history.map((record, i) => {
+                  const date = new Date(record.completedAt);
+                  const dateStr = date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+                  const primary = record.focusResult?.primary || '';
+                  const desiredJobName = record.desiredJob?.split('|')[1] || '';
+
+                  return (
+                    <div key={record.id || i} className="bg-white rounded-2xl p-4 shadow-sm">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                          style={{ background: getTypeColor(primary) + '20' }}>
+                          {getTypeEmoji(primary)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">{record.userName || '회원'}</span>
+                            {primary && (
+                              <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                                style={{ background: getTypeColor(primary) + '20', color: getTypeColor(primary) }}>
+                                {getTypeName(primary)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            {dateStr}
+                            {desiredJobName && <span className="ml-2">· 희망: {desiredJobName}</span>}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => loadDiagnosis(record)}
+                          className="flex-1 text-center py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                          결과 보기
+                        </button>
+                        <button onClick={() => deleteDiagnosis(record.id)}
+                          className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-400 hover:bg-red-50 hover:text-red-500">
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
