@@ -439,12 +439,12 @@ export default function DiagnosisPage() {
             <div>
               <label className="text-sm font-bold text-gray-700 mb-2 block">현재 상태가 어떻게 되시나요?</label>
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => setCurrentStatus('student')}
+                <button onClick={() => { setCurrentStatus('student'); setHasDesiredJob(null); setDesiredJob(''); }}
                   className={`py-4 rounded-xl border-2 transition-all ${currentStatus === 'student' ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
                   <div className="text-sm font-bold">취업 준비생</div>
                   <div className="text-xs text-gray-400 mt-1">구직 중이거나 취업 준비</div>
                 </button>
-                <button onClick={() => setCurrentStatus('worker')}
+                <button onClick={() => { setCurrentStatus('worker'); setHasDesiredJob(true); }}
                   className={`py-4 rounded-xl border-2 transition-all ${currentStatus === 'worker' ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
                   <div className="text-sm font-bold">직장인</div>
                   <div className="text-xs text-gray-400 mt-1">현재 직장에 재직 중</div>
@@ -453,24 +453,32 @@ export default function DiagnosisPage() {
             </div>
 
             <div>
-              <label className="text-sm font-bold text-gray-700 mb-2 block">희망하는 직무가 있으신가요?</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => { setHasDesiredJob(false); setDesiredJob(''); }}
-                  className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === false ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
-                  <div className="text-sm font-bold">아직 없어요</div>
-                  <div className="text-xs text-gray-400 mt-1">천천히 찾아볼게요</div>
-                </button>
-                <button onClick={() => setHasDesiredJob(true)}
-                  className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === true ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
-                  <div className="text-sm font-bold">있어요</div>
-                  <div className="text-xs text-gray-400 mt-1">희망 직무가 있어요</div>
-                </button>
-              </div>
+              <label className="text-sm font-bold text-gray-700 mb-2 block">
+                {currentStatus === 'worker' ? '현재 직무를 선택해주세요' : '희망하는 직무가 있으신가요?'}
+              </label>
+              {currentStatus === 'worker' ? (
+                <p className="text-xs text-gray-400 mb-3">없으면 현재 직무와 가장 가까운 직무를 선택해주세요</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 mb-0">
+                  <button onClick={() => { setHasDesiredJob(false); setDesiredJob(''); }}
+                    className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === false ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
+                    <div className="text-sm font-bold">아직 없어요</div>
+                    <div className="text-xs text-gray-400 mt-1">천천히 찾아볼게요</div>
+                  </button>
+                  <button onClick={() => setHasDesiredJob(true)}
+                    className={`py-4 rounded-xl border-2 transition-all ${hasDesiredJob === true ? 'border-[#22C55E] bg-green-50' : 'border-gray-200'}`}>
+                    <div className="text-sm font-bold">있어요</div>
+                    <div className="text-xs text-gray-400 mt-1">희망 직무가 있어요</div>
+                  </button>
+                </div>
+              )}
             </div>
 
-            {hasDesiredJob === true && (
+            {(currentStatus === 'worker' || hasDesiredJob === true) && (
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-700 block">잘 맞는지 분석 원하는 직무</label>
+                <label className="text-sm font-bold text-gray-700 block">
+                  {currentStatus === 'worker' ? '직무 선택' : '잘 맞는지 분석 원하는 직무'}
+                </label>
                 <div>
                   <div className="text-xs text-gray-400 mb-1">대분류</div>
                   <select
