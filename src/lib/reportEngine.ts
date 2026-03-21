@@ -2028,6 +2028,34 @@ export function replaceTemplate(html: string, r: any): string {
   // ─── 관심영역 (lines 983-996) — keep static for now, no interest data saved ───
   // (Interest area data is collected but not stored in localStorage yet)
 
+  // PDF용 emoji → CSS 변환 (Puppeteer에 color emoji 폰트 없음)
+  h = sanitizeEmojiForPdf(h);
+
   return h;
+}
+
+function sanitizeEmojiForPdf(html: string): string {
+  const dot = (color: string) =>
+    `<span style="display:inline-block;width:.7em;height:.7em;border-radius:50%;background:${color};vertical-align:middle;margin-right:2px;"></span>`;
+
+  return html
+    // 나다움 레벨
+    .replace(/🟢/g, dot('#22C55E'))
+    .replace(/🟡/g, dot('#EAB308'))
+    .replace(/🔴/g, dot('#EF4444'))
+    // 가치관 (Anchor)
+    .replace(/🔬/g, '◎')
+    .replace(/🚀/g, '▲')
+    .replace(/🦅/g, '◈')
+    .replace(/🏠/g, '⌂')
+    .replace(/🌱/g, '◉')
+    .replace(/⚖️/g, '⊜')
+    // Focus 타입
+    .replace(/🤝/g, '◎')
+    .replace(/💡/g, '✦')
+    .replace(/🛡️/g, '◈')
+    .replace(/✨/g, '✦')
+    // 기타 남은 emoji fallback
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, '•');
 }
 
