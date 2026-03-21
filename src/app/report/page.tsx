@@ -2050,9 +2050,14 @@ function ReportContent() {
   useEffect(() => {
     async function load() {
       try {
-        // 1. localStorage 우선
+        // 1. localStorage 우선 (어드민 preview 모드는 별도 키)
+        const isAdminPreview = searchParams.get('preview') === '1';
+        const lsKey = isAdminPreview ? 'face_admin_preview' : 'face_diagnosis';
         let r: any = null;
-        try { r = computeAll(); } catch (e) { console.error('[report] computeAll error:', e); }
+        try {
+          const raw = localStorage.getItem(lsKey);
+          if (raw) r = computeAll(JSON.parse(raw));
+        } catch (e) { console.error('[report] computeAll error:', e); }
 
         // 2. print 모드(Puppeteer)에서는 Supabase 건너뜀 — getUser()가 헤드리스 브라우저에서 무한 대기할 수 있음
         if (!r && !isPrint) {

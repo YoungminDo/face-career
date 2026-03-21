@@ -99,8 +99,9 @@ export default function ReportsPage() {
 
   const handleWebView = (item: QueueItem) => {
     if (!item.diagnosis_data) return alert('진단 데이터가 없습니다.');
-    localStorage.setItem('face_diagnosis', JSON.stringify(item.diagnosis_data));
-    window.open('/report', '_blank');
+    // face_diagnosis(유저 본인 데이터)를 오염시키지 않도록 별도 키 사용
+    localStorage.setItem('face_admin_preview', JSON.stringify(item.diagnosis_data));
+    window.open('/report?preview=1', '_blank');
   };
 
   const handleRetry = async (queueId: string, force = false) => {

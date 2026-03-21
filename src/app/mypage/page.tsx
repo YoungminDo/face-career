@@ -30,6 +30,7 @@ export default function MyPage() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('face_diagnosis');
+    localStorage.removeItem('face_admin_preview');
     router.push('/login');
   };
 
