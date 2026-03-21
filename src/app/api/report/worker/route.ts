@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
 
     if (uploadError) throw new Error('Storage 업로드 실패: ' + uploadError.message);
 
-    // 파일명 생성: FACE 프리미엄 리포트_학교_이름_유형_날짜
+    // 파일명 생성 (클라이언트 다운로드용으로 응답에 포함)
     const pdfName = (() => {
       const name = diagData.userName || '회원';
       const school = diagData.school || '';
@@ -153,10 +153,10 @@ export async function POST(req: NextRequest) {
       return ['FACE 프리미엄 리포트', school, name, typeCode, date].filter(Boolean).join('_') + '.pdf';
     })();
 
-    // Signed URL (30일 유효, 다운로드 파일명 지정)
+    // Signed URL (30일 유효)
     const { data: signedData, error: signErr } = await supabase.storage
       .from('report_files')
-      .createSignedUrl(storagePath, 60 * 60 * 24 * 30, { download: pdfName });
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 30);
 
     if (signErr || !signedData?.signedUrl) throw new Error('URL 생성 실패');
 
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
       progress: 100,
     });
 
-    return NextResponse.json({ success: true, reportUrl: signedData.signedUrl });
+    return NextResponse.json({ success: true, reportUrl: signedData.signedUrl, pdfName });
 
   } catch (err: any) {
     console.error('[worker] error:', err);

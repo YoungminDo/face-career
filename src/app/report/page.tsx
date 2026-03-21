@@ -2198,11 +2198,19 @@ function ReportContent() {
                   const parts = ['FACE 프리미엄 리포트', school, name, typeCode, date].filter(Boolean);
                   const fileName = parts.join('_') + '.pdf';
 
-                  // 자동 다운로드
-                  const a = document.createElement('a');
-                  a.href = st.reportUrl + '&download=' + encodeURIComponent(fileName);
-                  a.target = '_blank';
-                  a.click();
+                  // 자동 다운로드 (blob fetch → 파일명 지정)
+                  try {
+                    const blob = await fetch(st.reportUrl).then(r => r.blob());
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = fileName;
+                    a.click();
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+                  } catch {
+                    // CORS 실패 시 새 탭으로 열기
+                    window.open(st.reportUrl, '_blank');
+                  }
                   setPdfState('done');
                   setTimeout(() => { setPdfState('idle'); setPdfProgress(0); }, 4000);
                   return;
