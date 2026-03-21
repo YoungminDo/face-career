@@ -142,10 +142,21 @@ export async function POST(req: NextRequest) {
 
     if (uploadError) throw new Error('Storage 업로드 실패: ' + uploadError.message);
 
-    // Signed URL (30일 유효)
+    // 파일명 생성: FACE 프리미엄 리포트_학교_이름_유형_날짜
+    const pdfName = (() => {
+      const name = diagData.userName || '회원';
+      const school = diagData.school || '';
+      const typeCode = diagData.focusResult?.primary
+        ? (diagData.focusResult.primary + (diagData.focusResult.secondary || ''))
+        : '';
+      const date = (diagData.completedAt || new Date().toISOString()).slice(0, 10).replace(/-/g, '');
+      return ['FACE 프리미엄 리포트', school, name, typeCode, date].filter(Boolean).join('_') + '.pdf';
+    })();
+
+    // Signed URL (30일 유효, 다운로드 파일명 지정)
     const { data: signedData, error: signErr } = await supabase.storage
       .from('report_files')
-      .createSignedUrl(storagePath, 60 * 60 * 24 * 30);
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 30, { download: pdfName });
 
     if (signErr || !signedData?.signedUrl) throw new Error('URL 생성 실패');
 

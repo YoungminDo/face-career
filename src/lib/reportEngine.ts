@@ -2040,22 +2040,36 @@ function sanitizeEmojiForPdf(html: string): string {
 
   return html
     // 나다움 레벨
-    .replace(/🟢/g, dot('#22C55E'))
-    .replace(/🟡/g, dot('#EAB308'))
-    .replace(/🔴/g, dot('#EF4444'))
+    .replace(/🟢/gu, dot('#22C55E'))
+    .replace(/🟡/gu, dot('#EAB308'))
+    .replace(/🔴/gu, dot('#EF4444'))
+    .replace(/🔵/gu, dot('#3B82F6'))
     // 가치관 (Anchor)
-    .replace(/🔬/g, '◎')
-    .replace(/🚀/g, '▲')
-    .replace(/🦅/g, '◈')
-    .replace(/🏠/g, '⌂')
-    .replace(/🌱/g, '◉')
-    .replace(/⚖️/g, '⊜')
+    .replace(/🔬/gu, '◎')
+    .replace(/🚀/gu, '▲')
+    .replace(/🦅/gu, '◈')
+    .replace(/🏠/gu, '⌂')
+    .replace(/🌱/gu, '◉')
+    .replace(/⚖️?/gu, '⊜')
     // Focus 타입
-    .replace(/🤝/g, '◎')
-    .replace(/💡/g, '✦')
-    .replace(/🛡️/g, '◈')
-    .replace(/✨/g, '✦')
-    // 기타 남은 emoji fallback
-    .replace(/[\u{1F300}-\u{1FAFF}]/gu, '•');
+    .replace(/🤝/gu, '◎')
+    .replace(/💡/gu, '✦')
+    .replace(/🛡️?/gu, '◈')
+    .replace(/✨/gu, '✦')
+    // 섹션 헤더 아이콘 (Misc Symbols — 1F300 범위 밖)
+    .replace(/☀️?/gu, '✦')
+    .replace(/⚡️?/gu, '↯')
+    .replace(/🔋/gu, '▣')
+    .replace(/✅/gu, '✓')
+    .replace(/⚠️?/gu, '△')
+    .replace(/🌐/gu, '○')
+    .replace(/🔀/gu, '⇄')
+    .replace(/📊/gu, '▦')
+    .replace(/🎯/gu, '◎')
+    // Misc Symbols (U+2600-27BF) 나머지 fallback
+    .replace(/[☀-➿]️?/gu, '•')
+    // Main emoji block fallback
+    .replace(/[🌀-🫿]/gu, '•');
 }
+
 

@@ -2043,6 +2043,9 @@ function ReportContent() {
   const isPrint = searchParams.get('print') === '1';
   const [status, setStatus] = useState<'loading' | 'no_data' | 'ready'>('loading');
   const [html, setHtml] = useState('');
+  const [pdfState, setPdfState] = useState<'idle' | 'generating' | 'done' | 'error'>('idle');
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const diagDataRef = { current: null as any };
 
   useEffect(() => {
     async function load() {
@@ -2150,10 +2153,65 @@ function ReportContent() {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b px-4 py-3 flex justify-between items-center">
         <button onClick={() => window.location.href = '/result'} className="text-sm text-gray-500">← 결과 요약</button>
         <span className="text-sm font-bold">FACE 프리미엄 리포트</span>
-        <button onClick={() => {
-          const w = window.open('', '_blank');
-          if (w) { w.document.write(html); w.document.close(); w.print(); }
-        }} className="text-sm text-[#22C55E] font-bold">PDF 저장</button>
+        <button
+          onClick={async () => {
+            if (pdfState === 'generating') return;
+            setPdfState('generating');
+            setPdfProgress(5);
+            try {
+              const raw = localStorage.getItem('face_diagnosis');
+              if (!raw) throw new Error('진단 데이터 없음');
+              const diagData = JSON.parse(raw);
+              diagDataRef.current = diagData;
+
+              const genRes = await fetch('/api/report/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ diagnosisData: diagData }),
+              });
+              if (!genRes.ok) throw new Error('PDF 생성 요청 실패');
+              const { queueId } = await genRes.json();
+
+              // Poll until done
+              for (let i = 0; i < 60; i++) {
+                await new Promise(r => setTimeout(r, 2000));
+                const st = await fetch('/api/report/status/' + queueId).then(r => r.json());
+                setPdfProgress(st.progress || 10);
+                if (st.status === 'completed' && st.reportUrl) {
+                  // 파일명: FACE 프리미엄 리포트_학교_이름_유형_날짜
+                  const name = diagData.userName || '회원';
+                  const school = diagData.school || '';
+                  const typeCode = diagData.focusResult?.primary
+                    ? (diagData.focusResult.primary + (diagData.focusResult.secondary || ''))
+                    : '';
+                  const date = (diagData.completedAt || new Date().toISOString()).slice(0,10).replace(/-/g,'');
+                  const parts = ['FACE 프리미엄 리포트', school, name, typeCode, date].filter(Boolean);
+                  const fileName = parts.join('_') + '.pdf';
+
+                  // 자동 다운로드
+                  const a = document.createElement('a');
+                  a.href = st.reportUrl + '&download=' + encodeURIComponent(fileName);
+                  a.target = '_blank';
+                  a.click();
+                  setPdfState('done');
+                  setTimeout(() => { setPdfState('idle'); setPdfProgress(0); }, 4000);
+                  return;
+                }
+                if (st.status === 'failed') throw new Error(st.errorMessage || 'PDF 생성 실패');
+              }
+              throw new Error('타임아웃');
+            } catch (e) {
+              console.error('[PDF]', e);
+              setPdfState('error');
+              setTimeout(() => { setPdfState('idle'); setPdfProgress(0); }, 3000);
+            }
+          }}
+          disabled={pdfState === 'generating'}
+          className="text-sm font-bold"
+          style={{ color: pdfState === 'error' ? '#EF4444' : pdfState === 'done' ? '#3B82F6' : '#22C55E' }}
+        >
+          {pdfState === 'generating' ? `생성 중 ${pdfProgress}%` : pdfState === 'done' ? '✓ 다운로드' : pdfState === 'error' ? '실패 재시도' : 'PDF 저장'}
+        </button>
       </div>
       <div className="pt-14">
         <iframe
